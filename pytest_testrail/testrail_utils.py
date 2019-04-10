@@ -83,7 +83,7 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
             if tr_run.config == env_name:
                 tr_tests_groups.append({'tr_run': tr_run, 'tr_tests': tr.tests.get_tests(tr_run.id)})
 
-    if tr_tests_groups.__len__ == 0:
+    if tr_tests_groups.__len__() == 0:
         raise TestRailError(
             'No Configuration set with name %s for Test Plan %s' % (env_name, project_variables['test_plan']))
 
