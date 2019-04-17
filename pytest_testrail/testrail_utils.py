@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import json
 from typing import List
-from assertpy import assert_that
 
 from pytest_testrail.helper import TestRailError
 from pytest_testrail.model.case import Case
@@ -82,8 +81,9 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
     plan_entry_names = [plan_entry.name for plan_entry in tr_plan.entries]
     feature_names = scenarios_run.keys()
 
-    assert_that(feature_names.__len__() <= plan_entry_names.__len__()).is_true()
-    assert_that(set(feature_names).issubset(plan_entry_names)).is_true()
+    if feature_names.__len__() > plan_entry_names.__len__() \
+            or not set(feature_names).issubset(plan_entry_names):
+        print('Not all test results will be published. Missing Test Suites: %s' % list(set(feature_names) - set(plan_entry_names)))
 
     for tr_plan_entry in tr_plan.entries:
         tr_results = []
