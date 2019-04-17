@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import json
 from typing import List
+from assertpy import assert_that
 
 from pytest_testrail.helper import TestRailError
 from pytest_testrail.model.case import Case
@@ -13,7 +14,7 @@ from pytest_testrail.testrail_api import TestRailAPI
 SEPARATOR_CHAR = ' - '
 
 
-def export_tests(tr: TestRailAPI, project_id: int, feature):
+def export_tests(tr: TestRailAPI, project_id: int, project_name: str, feature):
     # Get a reference to the current project and dependencies
     tr_project = tr.projects.get_project(project_id=project_id)
     print('Collected project %s from TestRail' % tr_project.name)
@@ -61,11 +62,11 @@ def export_tests(tr: TestRailAPI, project_id: int, feature):
             for table_row in table_rows:
                 raw_custom_data_set = json.dumps(table_row, indent=4, ensure_ascii=False)
                 raw_case = build_case(tr, tr_project.id, tr_project_suite.id, tr_suite_section.id, feature, scenario,
-                                      raw_custom_preconds, raw_custom_data_set)
+                                      raw_custom_preconds, raw_custom_data_set, project_name)
                 export_case(tr, tr_suite_section.id, tr_suite_cases, raw_case)
         else:
             raw_case = build_case(tr, tr_project.id, tr_project_suite.id, tr_suite_section.id, feature, scenario,
-                                  raw_custom_preconds)
+                                  raw_custom_preconds, project_name)
             export_case(tr, tr_suite_section.id, tr_suite_cases, raw_case)
 
 
@@ -75,28 +76,30 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
     tr_plan = next((plan for plan in tr_active_plans if plan.name == project_variables['test_plan']), None)
     if tr_plan is None:
         raise TestRailError('No Test Plan set with name %s for Automation Testing' % project_variables['test_plan'])
-
     tr_plan = tr.plans.get_plan(tr_plan.id)
-    tr_tests_groups = []
-    for tr_plan_entry in tr_plan.entries:
-        for tr_run in tr_plan_entry.runs:
-            if tr_run.config == env_name:
-                tr_tests_groups.append({'tr_run': tr_run, 'tr_tests': tr.tests.get_tests(tr_run.id)})
-
-    if tr_tests_groups.__len__() == 0:
-        raise TestRailError(
-            'No Configuration set with name %s for Test Plan %s' % (env_name, project_variables['test_plan']))
-
     tr_statuses = tr.statuses.get_statuses()
-    for tr_tests_group in tr_tests_groups:
-        tr_results = []
-        for scenario_run in scenarios_run:
-            for tr_test in tr_tests_group['tr_tests']:
-                if tr_test.title == scenario_run.name:
-                    if tr_test.custom_methods['custom_data_set'] is None \
-                        or ('custom_data_set' in tr_test.custom_methods
-                            and json.loads(tr_test.custom_methods['custom_data_set']) == scenario_run.data_set):
 
+    plan_entry_names = [plan_entry.name for plan_entry in tr_plan.entries]
+    feature_names = scenarios_run.keys()
+
+    assert_that(feature_names.__len__() <= plan_entry_names.__len__()).is_true()
+    assert_that(set(feature_names).issubset(plan_entry_names)).is_true()
+
+    for tr_plan_entry in tr_plan.entries:
+        tr_results = []
+        for tr_run in tr_plan_entry.runs:
+            if tr_run.config == env_name and tr_run.name in scenarios_run:
+                for scenario_run in scenarios_run[tr_run.name]:
+                    tr_tests = tr.tests.get_tests(tr_run.id)
+                    tr_test = next((test for test in tr_tests if test.title == scenario_run.name
+                                    and (test.custom_methods['custom_data_set'] is None
+                                         or ('custom_data_set' in test.custom_methods
+                                             and json.loads(test.custom_methods['custom_data_set']) == scenario_run.data_set)))
+                                   , None)
+
+                    if tr_test is None:
+                        print('Result for test %s not published to TestRail' % scenario_run.name)
+                    else:
                         custom_step_results = []
                         custom_steps_separated = tr_test.custom_methods['custom_steps_separated']
                         passed = True
@@ -115,8 +118,7 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                                 'actual': exception_message,
                                 'status_id': status_id
                             })
-
-                        status_type = 'passed' if passed else 'failed'
+                        status_type = 'failed' if scenario_run.failed else 'passed'
                         tr_result = Result({
                             'test_id': tr_test.id,
                             'status_id': next(st.id for st in tr_statuses if st.name == status_type),
@@ -124,21 +126,18 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                             'custom_step_results': custom_step_results
                         })
                         tr_results.append(tr_result)
-                        break
-        tr_tests_group.update({'tr_results': tr_results})
 
-    for tr_tests_group in tr_tests_groups:
-        tr.results.add_results(tr_tests_group['tr_run'].id, tr_tests_group['tr_results'])
-    # tests to be published
+        if tr_results.__len__() != 0:
+            tr.results.add_results(tr_run.id, tr_results)
     print('\nResults published')
 
 
 # pylint: disable=too-many-arguments
 def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int, feature, scenario, raw_custom_preconds,
-               raw_custom_data_set=None) -> Case:
+               raw_custom_data_set=None, project_name=None) -> Case:
     # Setting Case references
-    feature_refs = [ft for ft in feature['feature']['tags'] if '-' in ft['name']]
-    scenario_refs = [sc for sc in scenario['tags'] if '-' in sc['name']]
+    feature_refs = [ft for ft in feature['feature']['tags'] if project_name+'-' in ft['name']]
+    scenario_refs = [sc for sc in scenario['tags'] if project_name+'-' in sc['name']]
     raw_refs = ', '.join(tg['name'].replace('@', '') for tg in (feature_refs + scenario_refs))
 
     # Setting Case priority

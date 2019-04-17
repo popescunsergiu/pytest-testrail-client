@@ -10,6 +10,7 @@ setup(
     url="https://github.com/popescunsergiu/pytest_testrail",
     packages=["pytest_testrail", "pytest_testrail.model"],
     install_requires=[
+        "assertpy==0.14",
         "pytest>=4.2",
         "pytest-variables>=1.5.0",
         "requests",
