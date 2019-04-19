@@ -60,12 +60,16 @@ def export_tests(tr: TestRailAPI, project_id: int, project_name: str, feature):
 
             for table_row in table_rows:
                 raw_custom_data_set = json.dumps(table_row, indent=4, ensure_ascii=False)
-                raw_case = build_case(tr, tr_project.id, tr_project_suite.id, tr_suite_section.id, feature, scenario,
-                                      raw_custom_preconds, raw_custom_data_set, project_name)
+                raw_case = build_case(tr=tr, project_id=tr_project.id, suite_id=tr_project_suite.id,
+                                      section_id=tr_suite_section.id, feature=feature, scenario=scenario,
+                                      raw_custom_preconds=raw_custom_preconds, raw_custom_data_set=raw_custom_data_set,
+                                      project_name=project_name)
                 export_case(tr, tr_suite_section.id, tr_suite_cases, raw_case)
         else:
-            raw_case = build_case(tr, tr_project.id, tr_project_suite.id, tr_suite_section.id, feature, scenario,
-                                  raw_custom_preconds, project_name)
+            raw_case = build_case(tr=tr, project_id=tr_project.id, suite_id=tr_project_suite.id,
+                                  section_id=tr_suite_section.id, feature=feature, scenario=scenario,
+                                  raw_custom_preconds=raw_custom_preconds, raw_custom_data_set=None,
+                                  project_name=project_name)
             export_case(tr, tr_suite_section.id, tr_suite_cases, raw_case)
 
 
@@ -82,8 +86,9 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
     feature_names = scenarios_run.keys()
 
     if feature_names.__len__() > plan_entry_names.__len__() \
-            or not set(feature_names).issubset(plan_entry_names):
-        print('Not all test results will be published. Missing Test Suites: %s' % list(set(feature_names) - set(plan_entry_names)))
+        or not set(feature_names).issubset(plan_entry_names):
+        print('Not all test results will be published. Missing Test Suites: %s' % list(
+            set(feature_names) - set(plan_entry_names)))
 
     for tr_plan_entry in tr_plan.entries:
         tr_results = []
@@ -94,7 +99,8 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                     tr_test = next((test for test in tr_tests if test.title == scenario_run.name
                                     and (test.custom_methods['custom_data_set'] is None
                                          or ('custom_data_set' in test.custom_methods
-                                             and json.loads(test.custom_methods['custom_data_set']) == scenario_run.data_set)))
+                                             and json.loads(
+                                test.custom_methods['custom_data_set']) == scenario_run.data_set)))
                                    , None)
 
                     if tr_test is None:
@@ -136,8 +142,8 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
 def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int, feature, scenario, raw_custom_preconds,
                raw_custom_data_set=None, project_name=None) -> Case:
     # Setting Case references
-    feature_refs = [ft for ft in feature['feature']['tags'] if project_name+'-' in ft['name']]
-    scenario_refs = [sc for sc in scenario['tags'] if project_name+'-' in sc['name']]
+    feature_refs = [ft for ft in feature['feature']['tags'] if project_name + '-' in ft['name']]
+    scenario_refs = [sc for sc in scenario['tags'] if project_name + '-' in sc['name']]
     raw_refs = ', '.join(tg['name'].replace('@', '') for tg in (feature_refs + scenario_refs))
 
     # Setting Case priority
