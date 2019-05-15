@@ -91,8 +91,8 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
             set(feature_names) - set(plan_entry_names)))
 
     for tr_plan_entry in tr_plan.entries:
-        tr_results = []
         for tr_run in tr_plan_entry.runs:
+            tr_results = []
             if tr_run.config == env_name and tr_run.name in scenarios_run:
                 for scenario_run in scenarios_run[tr_run.name]:
                     tr_tests = tr.tests.get_tests(tr_run.id)
@@ -133,8 +133,8 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                         })
                         tr_results.append(tr_result)
 
-        if tr_results.__len__() != 0:
-            tr.results.add_results(tr_run.id, tr_results)
+            if tr_results.__len__() != 0:
+                tr.results.add_results(tr_run.id, tr_results)
     print('\nResults published')
 
 
