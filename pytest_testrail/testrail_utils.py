@@ -117,7 +117,7 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                             if status_type == 'failed':
                                 passed = False
                             status_id = next((st.id for st in tr_statuses if st.name == status_type), None)
-                            exception_message = '' if status_type != 'failed' or exception_message not in scenario_run else scenario_run.exception_message
+                            exception_message = '' if status_type != 'failed' or hasattr(scenarios_run, 'exception_message') else scenario_run.exception_message
                             custom_step_results.append({
                                 'content': tr_case_step['content'],
                                 'expected': tr_case_step['expected'],
