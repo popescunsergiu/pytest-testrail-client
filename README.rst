@@ -1,4 +1,4 @@
-pytest-selenium
+pytest-testrail
 ===============
 
 TODO

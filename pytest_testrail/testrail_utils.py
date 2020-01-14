@@ -117,7 +117,9 @@ def export_tests_results(tr: TestRailAPI, project_variables: dict, scenarios_run
                             if status_type == 'failed':
                                 passed = False
                             status_id = next((st.id for st in tr_statuses if st.name == status_type), None)
-                            exception_message = '' if status_type != 'failed' or not hasattr(scenarios_run, 'exception_message') else scenario_run.exception_message
+                            exception_message = scenario_run.exception_message \
+                                if status_type == 'failed' and hasattr(scenario_run, 'exception_message') \
+                                else ''
                             custom_step_results.append({
                                 'content': tr_case_step['content'],
                                 'expected': tr_case_step['expected'],
@@ -146,6 +148,16 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
     scenario_refs = [sc for sc in scenario['tags'] if project_name + '-' in sc['name']]
     raw_refs = ', '.join(tg['name'].replace('@', '') for tg in (feature_refs + scenario_refs))
 
+    # Setting Case tags
+    raw_custom_tags = [sc['name'] for sc in scenario['tags']
+                       if ('automated' not in sc['name']
+                           and 'manual' not in sc['name'])] + \
+                      [ft['name'] for ft in feature['feature']['tags']
+                       if ('automated' not in ft['name']
+                           and 'manual' not in ft['name']
+                           and 'nondestructive' not in ft['name']
+                           and project_name + '-' not in ft['name'])]
+
     # Setting Case priority
     priority_name = 'Critical' if filter(lambda sc: 'smoke' in sc['name'], scenario['tags']) \
         else 'High' if filter(lambda sc: 'sanity' in sc['name'], scenario['tags']) \
@@ -161,16 +173,22 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                         None)
 
     # Setting Case automation
-    raw_custom_automation_type = '1' if any('automated' in sc['name'] for sc in scenario['tags']) else '0'
+    raw_custom_automation_type = '2' if any('stencil-automated' in sc['name'] for sc in scenario['tags']) \
+        else '1' if any('automated' in sc['name'] for sc in scenario['tags']) else '0'
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
-    raw_steps.extend([{'content': '**' + rs['keyword'].strip() + ':** ' + rs['text'].strip(), 'expected': ''}
-                      for rs in scenario['steps']])
+    raw_steps.extend([
+        {
+            'content': '**' + rs['keyword'].strip() + ':** ' + rs['text'].strip() + add_data_table(rs),
+            'expected': ''
+        }
+        for rs in scenario['steps']])
     raw_case = Case({
         'estimate': '10m',
         'priority_id': raw_priority,
         'refs': raw_refs,
+        'custom_tags': ', '.join(raw_custom_tags),
         'suite_id': suite_id,
         'section_id': section_id,
         'title': scenario['name'],
@@ -182,6 +200,18 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
         'custom_steps_separated': raw_steps
     })
     return raw_case
+
+
+def add_data_table(scenario_step):
+    if 'argument' not in scenario_step:
+        return ''
+    data_table = '\n*Data Table*\n'
+    table_rows = [rsa for rsa in scenario_step['argument']['rows']]
+    for i, table_row in enumerate(table_rows):
+        for j, rowCell in enumerate(table_row['cells']):
+            data_table += ('|%s' % rowCell['value'])
+        data_table += '|\n'
+    return data_table
 
 
 # pylint: disable=protected-access
