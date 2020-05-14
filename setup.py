@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(
-    name="pytest_testrail",
+    name="pytest-testrail-client",
     version='0.1.0',
-    use_scm_version=True,
+    use_scm_version=False,
     description="pytest plugin for Testrail",
     long_description=open("README.rst").read(),
     author="Sergiu Popescu",
-    author_email="spopescu@moduscreate.com",
+    author_email="popescunsergiu@gmail.com",
     url="https://github.com/popescunsergiu/pytest_testrail",
     packages=["pytest_testrail", "pytest_testrail.model"],
     install_requires=[
@@ -17,7 +17,7 @@ setup(
     ],
     entry_points={
         "pytest11": [
-            "TestRailAPI = pytest_testrail.testrail_api",
+            "testrail_api = pytest_testrail.testrail_api",
         ]
     },
     setup_requires=["setuptools_scm"],
@@ -27,15 +27,12 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Framework :: Pytest",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
-        "Operating System :: POSIX",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: MacOS :: MacOS X",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
         "Topic :: Software Development :: Quality Assurance",
         "Topic :: Software Development :: Testing",
         "Topic :: Utilities",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3",
     ],
 )
