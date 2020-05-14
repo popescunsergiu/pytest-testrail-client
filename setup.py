@@ -2,6 +2,7 @@ from setuptools import setup
 
 setup(
     name="pytest_testrail",
+    version='0.1.0',
     use_scm_version=True,
     description="pytest plugin for Testrail",
     long_description=open("README.rst").read(),
