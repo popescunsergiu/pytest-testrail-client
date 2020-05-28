@@ -2,13 +2,14 @@ from setuptools import setup
 
 setup(
     name="pytest-testrail-client",
-    version="1.0.0",
+    version="1.0.1",
     use_scm_version=False,
     description="pytest plugin for Testrail",
     long_description=open("README.rst").read(),
     author="Sergiu Popescu",
     author_email="popescunsergiu@gmail.com",
-    url="https://github.com/popescunsergiu/pytest_testrail_client",
+    url="https://github.com/popescunsergiu/pytest-testrail-client",
+    download_url="https://github.com/popescunsergiu/pytest-testrail-client/archive/v1.0.1.tar.gz",
     install_requires=[
         "cucumber-tag-expressions>=2.0.0",
         "gherkin-official>=4.1.0",
@@ -18,7 +19,7 @@ setup(
     ],
     entry_points={
         "pytest11": [
-            "pytest_testrail_client = pytest_testrail_client.pytest_testrail_client",
+            "pytest-testrail-client = pytest_testrail_client.pytest_testrail_client",
         ]
     },
     setup_requires=["setuptools_scm"],
