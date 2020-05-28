@@ -5,8 +5,8 @@ import json
 from typing import List
 
 from pytest_testrail_client._enums import METHODS
+from pytest_testrail_client._exception import TestRailError
 from pytest_testrail_client.model.case import Case
-from pytest_testrail_client.helper import TestRailError
 from pytest_testrail_client.model.case_type import CaseType
 from pytest_testrail_client.model.plan import Plan, Entry
 from pytest_testrail_client.model.priority import Priority

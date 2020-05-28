@@ -10,13 +10,13 @@ from typing import List
 
 import pytest
 
-from pytest_testrail_client.helper import TestRailError
 from pytest_testrail_client.model.case import Case
 from pytest_testrail_client.model.plan import Entry
 from pytest_testrail_client.model.result import Result
 from pytest_testrail_client.model.section import Section
 from pytest_testrail_client.model.suite import Suite
 from pytest_testrail_client.testrail_api import TestRailAPI, validate_setup
+from ._exception import TestRailError
 from ._utils import _get_feature, _get_list_of_files, _write_feature
 from .model.run import Run
 
