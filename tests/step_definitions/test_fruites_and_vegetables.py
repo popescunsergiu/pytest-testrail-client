@@ -16,6 +16,7 @@ scenarios('../features/demo/fruits_01.feature',
 @given("I have <pieces> cherries")
 @given("I have <pieces> onions")
 @given("I have <pieces> potatoes")
+@given("I have <pieces> carrots")
 @given("I have <pieces> chocolates")
 @given("I have <pieces> candies")
 def i_have_fruites(pieces):
@@ -33,6 +34,7 @@ def i_have_fruites_apples(pieces):
 @when("I eat <pieces_eaten> cherries")
 @when("I eat <pieces_eaten> onions")
 @when("I eat <pieces_eaten> potatoes")
+@when("I eat <pieces_eaten> carrots")
 @when("I eat <pieces_eaten> chocolates")
 @when("I eat <pieces_eaten> candies")
 def i_eat_fruites(pieces_eaten):
@@ -44,6 +46,7 @@ def i_eat_fruites(pieces_eaten):
 @then("I should have <pieces_left> cherries")
 @then("I should have <pieces_left> onions")
 @then("I should have <pieces_left> potatoes")
+@then("I should have <pieces_left> carrots")
 @then("I should have <pieces_left> chocolates")
 @then("I should have <pieces_left> candies")
 def i_should_have_fruites(pieces_left):

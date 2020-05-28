@@ -1,4 +1,5 @@
 from os import listdir, path
+from os.path import abspath
 
 from gherkin.token_scanner import TokenScanner
 from gherkin.parser import Parser
@@ -31,7 +32,10 @@ def _write_feature(file_path: str, line, column, value):
 def _get_list_of_files(absolute_path):
     # create a list of file and sub directories
     # names in the given directory
-    list_of_file = listdir(absolute_path)
+    if path.isdir(absolute_path):
+        list_of_file = listdir(absolute_path)
+    else:
+        list_of_file = [absolute_path]
     all_files = list()
     # Iterate over all the entries
     for entry in list_of_file:

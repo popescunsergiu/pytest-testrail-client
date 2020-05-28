@@ -128,6 +128,8 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
         else tr_suite_sections_id['tr_suite_section_id']
     raw_custom_preconds = []
     for scenario in reversed(feature['children']):
+        if scenario['type'] == 'Background':
+            continue
         raw_cases = []
         if 'examples' in scenario:
             examples_raw = scenario['examples'][0]
