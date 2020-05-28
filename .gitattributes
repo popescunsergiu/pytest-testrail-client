@@ -1,0 +1,11 @@
+# exclude .gitignore and similar from the generated tarball
+.git*                       export-ignore
+# exclude CI configurations (useless outside the repo)
+.circleci                   export-ignore
+#exclude tests and app for tests
+app                         export-ignore
+tests                       export-ignore
+.pylintrc                   export-ignore
+.python-version             export-ignore
+Pipfile*                    export-ignore
+requirements-testing.txt    export-ignore

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
-from pytest_testrail.helper import custom_methods, TestRailError, testrail_duration_to_timedelta
+from pytest_testrail_client._exception import TestRailError
+from pytest_testrail_client.helper import custom_methods, testrail_duration_to_timedelta
 
 
 class Result(object):

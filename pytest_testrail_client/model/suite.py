@@ -1,7 +1,9 @@
-from pytest_testrail.helper import TestRailError
+from datetime import datetime
+
+from pytest_testrail_client._exception import TestRailError
 
 
-class Section(object):
+class Suite(object):
     def __init__(self, content=None):
         self._content = content or dict()
 
@@ -9,16 +11,15 @@ class Section(object):
         return self.name
 
     @property
-    def depth(self):
-        return self._content.get('depth')
+    def completed_on(self):
+        try:
+            return datetime.fromtimestamp(int(self._content.get('completed_on')))
+        except TypeError:
+            return None
 
     @property
     def description(self):
         return self._content.get('description')
-
-    @property
-    def display_order(self):
-        return self._content.get('display_order')
 
     @description.setter
     def description(self, value):
@@ -31,6 +32,18 @@ class Section(object):
         return self._content.get('id')
 
     @property
+    def is_baseline(self):
+        return self._content.get('is_baseline')
+
+    @property
+    def is_completed(self):
+        return self._content.get('is_completed')
+
+    @property
+    def is_master(self):
+        return self._content.get('is_master')
+
+    @property
     def name(self):
         return self._content.get('name')
 
@@ -41,24 +54,18 @@ class Section(object):
         self._content['name'] = value
 
     @property
-    def suite_id(self):
-        return self._content.get('suite_id')
+    def project_id(self):
+        return self._content.get('project_id')
 
-    @suite_id.setter
-    def suite_id(self, value):
+    @project_id.setter
+    def project_id(self, value):
         if not isinstance(value, int):
             raise TestRailError('input must be an int')
-        self._content['suite_id'] = value
+        self._content['project_id'] = value
 
     @property
-    def parent_id(self):
-        return self._content.get('parent_id')
-
-    @parent_id.setter
-    def parent_id(self, value):
-        if not isinstance(value, int):
-            raise TestRailError('input must be an int')
-        self._content['parent_id'] = value
+    def url(self):
+        return self._content.get('url')
 
     def raw_data(self):
         return self._content

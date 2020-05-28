@@ -2,10 +2,6 @@ import re
 from datetime import timedelta
 
 
-class TestRailError(Exception):
-    pass
-
-
 class ContainerIter:
     def __init__(self, objs):
         self._objs = list(objs)

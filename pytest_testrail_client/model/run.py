@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pytest_testrail.helper import TestRailError
+from pytest_testrail_client._exception import TestRailError
 
 
 class Run(object):

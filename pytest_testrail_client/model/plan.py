@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from pytest_testrail.helper import TestRailError
-from pytest_testrail.model.run import Run
+from pytest_testrail_client._exception import TestRailError
+from pytest_testrail_client.model.run import Run
 
 
 class Plan(object):

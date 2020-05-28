@@ -1,0 +1,5 @@
+cucumber-tag-expressions>=2.0.0
+gherkin-official>=4.1.0
+pytest>=4.2
+pytest-bdd>=3.3.0
+requests

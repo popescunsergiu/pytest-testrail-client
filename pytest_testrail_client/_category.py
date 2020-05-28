@@ -4,23 +4,24 @@ TestRail API categories
 import json
 from typing import List
 
-from pytest_testrail.model.case import Case
-from pytest_testrail.helper import TestRailError
-from pytest_testrail.model.case_type import CaseType
-from pytest_testrail.model.plan import Plan, Entry
-from pytest_testrail.model.priority import Priority
-from pytest_testrail.model.project import Project
-from pytest_testrail.model.result import Result
-from pytest_testrail.model.section import Section
-from pytest_testrail.model.status import Status
-from pytest_testrail.model.suite import Suite
-from pytest_testrail.model.templates import Template
-from pytest_testrail.model.test import Test
+from pytest_testrail_client._enums import METHODS
+from pytest_testrail_client.model.case import Case
+from pytest_testrail_client.helper import TestRailError
+from pytest_testrail_client.model.case_type import CaseType
+from pytest_testrail_client.model.plan import Plan, Entry
+from pytest_testrail_client.model.priority import Priority
+from pytest_testrail_client.model.project import Project
+from pytest_testrail_client.model.result import Result
+from pytest_testrail_client.model.section import Section
+from pytest_testrail_client.model.status import Status
+from pytest_testrail_client.model.suite import Suite
+from pytest_testrail_client.model.templates import Template
+from pytest_testrail_client.model.test import Test
 
 
 class BaseCategory:
 
-    def __init__(self, session):
+    def __init__(self, session) -> None:
         self._session = session
 
 
@@ -34,7 +35,7 @@ class Cases(BaseCategory):
         :param case_id: The ID of the test case
         :return: response
         """
-        response = self._session.request('GET', f'get_case/{case_id}')
+        response = self._session.request(METHODS.GET, f'get_case/{case_id}')
         return Case(response)
 
     def get_cases(self, project_id: int, **kwargs) -> List[Case]:
@@ -47,7 +48,7 @@ class Cases(BaseCategory):
             :key section_id: int - The ID of the section (optional)
         :return: response
         """
-        response = self._session.request('GET', f'get_cases/{project_id}', params=kwargs)
+        response = self._session.request(METHODS.GET, f'get_cases/{project_id}', params=kwargs)
         return [Case(rsp) for rsp in response]
 
     def add_case(self, section_id: int, case: Case) -> Case:
@@ -67,7 +68,7 @@ class Cases(BaseCategory):
         :return: response
         """
         data = case.raw_data()
-        response = self._session.request('POST', f'add_case/{section_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_case/{section_id}', json=data)
         if 'error' in response:
             raise TestRailError('Case add failed with error: %s' % response['error'])
         return Case(response)
@@ -83,7 +84,7 @@ class Cases(BaseCategory):
         :return: response
         """
         data = case.raw_data()
-        response = self._session.request('POST', f'update_case/{case_id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_case/{case_id}', json=data)
         if 'error' in response:
             raise TestRailError('Case update failed with error: %s' % response['error'])
         return Case(response)
@@ -96,7 +97,7 @@ class Cases(BaseCategory):
         :param case_id: The ID of the test case
         :return: response
         """
-        return self._session.request('POST', f'delete_case/{case_id}')
+        return self._session.request(METHODS.POST, f'delete_case/{case_id}')
 
 
 class CaseFields(BaseCategory):
@@ -108,7 +109,7 @@ class CaseFields(BaseCategory):
         Returns a list of available test case custom fields.
         :return: response
         """
-        return self._session.request('GET', 'get_case_fields')
+        return self._session.request(METHODS.GET, 'get_case_fields')
 
     def add_case_field(self, typ: str, name: str, label: str, **kwargs):
         """
@@ -131,7 +132,7 @@ class CaseFields(BaseCategory):
         :return: response
         """
         data = dict(type=typ, name=name, label=label, **kwargs)
-        return self._session.request('POST', 'add_case_field', json=data)
+        return self._session.request(METHODS.POST, 'add_case_field', json=data)
 
 
 class CaseTypes(BaseCategory):
@@ -143,7 +144,7 @@ class CaseTypes(BaseCategory):
         Returns a list of available case types.
         :return: response
         """
-        response = self._session.request('GET', 'get_case_types')
+        response = self._session.request(METHODS.GET, 'get_case_types')
         return [CaseType(obj) for obj in response]
 
 
@@ -156,7 +157,7 @@ class Configurations(BaseCategory):
         :param project_id: The ID of the project
         :return: response
         """
-        return self._session.request('GET', f'get_configs/{project_id}')
+        return self._session.request(METHODS.GET, f'get_configs/{project_id}')
 
     def add_config_group(self, project_id: int, name: str):
         """
@@ -166,7 +167,7 @@ class Configurations(BaseCategory):
         :param name: The name of the configuration group (required)
         :return: response
         """
-        return self._session.request('POST', f'add_config_group/{project_id}', json={'name': name})
+        return self._session.request(METHODS.POST, f'add_config_group/{project_id}', json={'name': name})
 
     def add_config(self, config_group_id: int, name: str):
         """
@@ -176,7 +177,7 @@ class Configurations(BaseCategory):
         :param name: The name of the configuration (required)
         :return: response
         """
-        return self._session.request('POST', f'add_config/{config_group_id}', json={'name': name})
+        return self._session.request(METHODS.POST, f'add_config/{config_group_id}', json={'name': name})
 
     def update_config_group(self, config_group_id: int, name: str):
         """
@@ -186,7 +187,7 @@ class Configurations(BaseCategory):
         :param name: The name of the configuration group
         :return: response
         """
-        return self._session.request('POST', f'update_config_group/{config_group_id}', json={'name': name})
+        return self._session.request(METHODS.POST, f'update_config_group/{config_group_id}', json={'name': name})
 
     def update_config(self, config_id: int, name: str):
         """
@@ -196,7 +197,7 @@ class Configurations(BaseCategory):
         :param name: The name of the configuration
         :return: response
         """
-        return self._session.request('POST', f'update_config/{config_id}', json={'name': name})
+        return self._session.request(METHODS.POST, f'update_config/{config_id}', json={'name': name})
 
     def delete_config_group(self, config_group_id: int):
         """
@@ -205,7 +206,7 @@ class Configurations(BaseCategory):
         :param config_group_id: The ID of the configuration group
         :return: response
         """
-        return self._session.request('POST', f'delete_config_group/{config_group_id}')
+        return self._session.request(METHODS.POST, f'delete_config_group/{config_group_id}')
 
     def delete_config(self, config_id: int):
         """
@@ -214,7 +215,7 @@ class Configurations(BaseCategory):
         :param config_id: The ID of the configuration
         :return: response
         """
-        return self._session.request('POST', f'delete_config/{config_id}')
+        return self._session.request(METHODS.POST, f'delete_config/{config_id}')
 
 
 class Milestones(BaseCategory):
@@ -227,7 +228,7 @@ class Milestones(BaseCategory):
         :param milestone_id: The ID of the milestone
         :return: response
         """
-        return self._session.request('GET', f'get_milestone/{milestone_id}')
+        return self._session.request(METHODS.GET, f'get_milestone/{milestone_id}')
 
     def get_milestones(self, project_id: int, **kwargs) -> List[dict]:
         """
@@ -240,7 +241,7 @@ class Milestones(BaseCategory):
                                 (available since TestRail 5.3).
         :return: response
         """
-        return self._session.request('GET', f'get_milestones/{project_id}', params=kwargs)
+        return self._session.request(METHODS.GET, f'get_milestones/{project_id}', params=kwargs)
 
     def add_milestone(self, project_id: int, name: str, **kwargs) -> dict:
         """
@@ -258,7 +259,7 @@ class Milestones(BaseCategory):
         :return: response
         """
         data = dict(name=name, **kwargs)
-        return self._session.request('POST', f'add_milestone/{project_id}', json=data)
+        return self._session.request(METHODS.POST, f'add_milestone/{project_id}', json=data)
 
     def update_milestone(self, milestone_id: int, **kwargs) -> dict:
         """
@@ -273,7 +274,7 @@ class Milestones(BaseCategory):
                                                     (available since TestRail 5.3)
         :return: response
         """
-        return self._session.request('POST', f'update_milestone/{milestone_id}', json=kwargs)
+        return self._session.request(METHODS.POST, f'update_milestone/{milestone_id}', json=kwargs)
 
     def delete_milestone(self, milestone_id: int):
         """
@@ -282,7 +283,7 @@ class Milestones(BaseCategory):
         :param milestone_id: The ID of the milestone
         :return: response
         """
-        return self._session.request('POST', f'delete_milestone/{milestone_id}')
+        return self._session.request(METHODS.POST, f'delete_milestone/{milestone_id}')
 
 
 class Plans(BaseCategory):
@@ -295,7 +296,7 @@ class Plans(BaseCategory):
         :param plan_id: The ID of the test plan
         :return: response
         """
-        response = self._session.request('GET', f'get_plan/{plan_id}')
+        response = self._session.request(METHODS.GET, f'get_plan/{plan_id}')
         return Plan(response)
 
     def get_plans(self, project_id: int, **kwargs) -> List[Plan]:
@@ -313,7 +314,7 @@ class Plans(BaseCategory):
             :key milestone_id: int(list) - A comma-separated list of milestone IDs to filter by.
         :return: response
         """
-        response = self._session.request('GET', f'get_plans/{project_id}', params=kwargs)
+        response = self._session.request(METHODS.GET, f'get_plans/{project_id}', params=kwargs)
         return [Plan(obj) for obj in response]
 
     def add_plan(self, project_id: int, plan: Plan) -> Plan:
@@ -326,7 +327,7 @@ class Plans(BaseCategory):
         :return: response
         """
         data = plan.raw_data()
-        response = self._session.request('POST', f'add_plan/{project_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_plan/{project_id}', json=data)
         return Plan(response)
 
     def add_plan_entry(self, plan_id: int, entry: Entry) -> Entry:
@@ -339,7 +340,7 @@ class Plans(BaseCategory):
         :return: response
         """
         data = entry.raw_data()
-        response = self._session.request('POST', f'add_plan_entry/{plan_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_plan_entry/{plan_id}', json=data)
         return Entry(response)
 
     def update_plan(self, plan: Plan) -> Plan:
@@ -352,7 +353,7 @@ class Plans(BaseCategory):
         :return: response
         """
         data = plan.raw_data()
-        response = self._session.request('POST', f'update_plan/{plan.id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_plan/{plan.id}', json=data)
         return Plan(response)
 
     def update_plan_entry(self, plan_id: int, entry: Entry) -> Entry:
@@ -366,7 +367,7 @@ class Plans(BaseCategory):
         :return: response
         """
         data = entry.raw_data()
-        response = self._session.request('POST', f'update_plan_entry/{plan_id}/{entry.id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_plan_entry/{plan_id}/{entry.id}', json=data)
         return Entry(response)
 
     def close_plan(self, plan_id: int) -> Plan:
@@ -377,7 +378,7 @@ class Plans(BaseCategory):
         :param plan_id: The ID of the test plan
         :return: response
         """
-        response = self._session.request('POST', f'close_plan/{plan_id}')
+        response = self._session.request(METHODS.POST, f'close_plan/{plan_id}')
         return Plan(response)
 
     def delete_plan(self, plan_id: int):
@@ -388,7 +389,7 @@ class Plans(BaseCategory):
         :param plan_id: The ID of the test plan
         :return: response
         """
-        return self._session.request('POST', f'delete_plan/{plan_id}')
+        return self._session.request(METHODS.POST, f'delete_plan/{plan_id}')
 
     def delete_plan_entry(self, plan_id: int, entry_id: int):
         """
@@ -399,7 +400,7 @@ class Plans(BaseCategory):
         :param entry_id: The ID of the test plan entry (note: not the test run ID)
         :return: response
         """
-        return self._session.request('POST', f'delete_plan_entry/{plan_id}/{entry_id}')
+        return self._session.request(METHODS.POST, f'delete_plan_entry/{plan_id}/{entry_id}')
 
 
 class Priorities(BaseCategory):
@@ -411,7 +412,7 @@ class Priorities(BaseCategory):
         Returns a list of available priorities.
         :return: response
         """
-        response = self._session.request('GET', 'get_priorities')
+        response = self._session.request(METHODS.GET, 'get_priorities')
         return [Priority(obj) for obj in response]
 
 
@@ -426,7 +427,7 @@ class Projects(BaseCategory):
         :param project_id: The ID of the project
         :return: response
         """
-        response = self._session.request('GET', f'get_project/{project_id}')
+        response = self._session.request(METHODS.GET, f'get_project/{project_id}')
         return Project(response)
 
     def get_projects(self, **kwargs) -> List[Project]:
@@ -439,7 +440,7 @@ class Projects(BaseCategory):
             :key is_completed: int - 1 to return completed projects only. 0 to return active projects only.
         :return: response
         """
-        response = self._session.request('GET', 'get_projects', params=kwargs)
+        response = self._session.request(METHODS.GET, 'get_projects', params=kwargs)
         return [Project(obj) for obj in response]
 
     def add_project(self, project: Project) -> Project:
@@ -452,7 +453,7 @@ class Projects(BaseCategory):
         :return: response
         """
         data = project.raw_data()
-        response = self._session.request('POST', 'add_project', json=data)
+        response = self._session.request(METHODS.POST, 'add_project', json=data)
         if 'error' in response:
             raise TestRailError('Project creation failed with error: %s' % response['error'])
         return Project(response)
@@ -468,7 +469,7 @@ class Projects(BaseCategory):
         :return: response
         """
         data = project.raw_data()
-        response = self._session.request('POST', f'update_project/{project.id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_project/{project.id}', json=data)
         if 'error' in response:
             raise TestRailError('Project update failed with error: %s' % response['error'])
         return Project(response)
@@ -482,7 +483,7 @@ class Projects(BaseCategory):
         :param project_id: The ID of the project
         :return: response
         """
-        response = self._session.request('POST', f'delete_project/{project_id}')
+        response = self._session.request(METHODS.POST, f'delete_project/{project_id}')
         if 'error' in response:
             raise TestRailError('Project delete failed with error: %s' % response['error'])
         return response
@@ -502,7 +503,7 @@ class Results(BaseCategory):
             :key status_id: int(list) - A comma-separated list of status IDs to filter by.
         :return: response
         """
-        return self._session.request('GET', f'get_results/{test_id}', params=kwargs)
+        return self._session.request(METHODS.GET, f'get_results/{test_id}', params=kwargs)
 
     def get_results_for_case(self, run_id: int, case_id: int, **kwargs) -> List[Result]:
         """
@@ -524,7 +525,7 @@ class Results(BaseCategory):
             :key status_id: int(list) - A comma-separated list of status IDs to filter by.
         :return: response
         """
-        return self._session.request('GET', f'get_results_for_case/{run_id}/{case_id}', params=kwargs)
+        return self._session.request(METHODS.GET, f'get_results_for_case/{run_id}/{case_id}', params=kwargs)
 
     def get_results_for_run(self, run_id: int, **kwargs) -> List[Result]:
         """
@@ -542,7 +543,7 @@ class Results(BaseCategory):
             :key status_id: int(list) - A comma-separated list of status IDs to filter by.
         :return: response
         """
-        return self._session.request('GET', f'get_results_for_run/{run_id}', params=kwargs)
+        return self._session.request(METHODS.GET, f'get_results_for_run/{run_id}', params=kwargs)
 
     def add_result(self, result: Result) -> List[Result]:
         """
@@ -555,7 +556,7 @@ class Results(BaseCategory):
         :return: response
         """
         data = result.raw_data()
-        response = self._session.request('POST', f'add_result/{result.test_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_result/{result.test_id}', json=data)
         return [Result(obj) for obj in response]
 
     def add_result_for_case(self, run_id: int, case_id: int, result: Result) -> List[Result]:
@@ -578,7 +579,7 @@ class Results(BaseCategory):
         :return: response
         """
         data = result.raw_data()
-        result = self._session.request('POST', f'add_result_for_case/{run_id}/{case_id}', json=data)
+        result = self._session.request(METHODS.POST, f'add_result_for_case/{run_id}/{case_id}', json=data)
         return [Result(obj) for obj in result]
 
     def add_results(self, run_id: int, results: List[Result]) -> List[Result]:
@@ -604,7 +605,7 @@ class Results(BaseCategory):
         payload = {'results': list()}
         for obj in data:
             payload['results'].append(obj)
-        response = self._session.request('POST', f'add_results/{run_id}', json=payload)
+        response = self._session.request(METHODS.POST, f'add_results/{run_id}', json=payload)
         return [Result(obj) for obj in response]
 
     def add_results_for_cases(self, run_id: int, results: List[Result]) -> List[Result]:
@@ -629,7 +630,7 @@ class Results(BaseCategory):
         :return: response
         """
         data = json.dumps({'results': [ob.raw_data() for ob in results]})
-        response = self._session.request('POST', f'add_results_for_cases/{run_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_results_for_cases/{run_id}', json=data)
         return [Result(obj) for obj in response]
 
 
@@ -643,7 +644,7 @@ class ResultFields(BaseCategory):
 
         :return: response
         """
-        return self._session.request('GET', 'get_result_fields')
+        return self._session.request(METHODS.GET, 'get_result_fields')
 
 
 class Runs(BaseCategory):
@@ -657,7 +658,7 @@ class Runs(BaseCategory):
         :param run_id: The ID of the test run
         :return: response
         """
-        return self._session.request('GET', f'get_run/{run_id}')
+        return self._session.request(METHODS.GET, f'get_run/{run_id}')
 
     def get_runs(self, project_id: int, **kwargs) -> List[dict]:
         """
@@ -677,7 +678,7 @@ class Runs(BaseCategory):
             :key suite_id: int(list) - A comma-separated list of test suite IDs to filter by.
         :return: response
         """
-        return self._session.request('GET', f'get_runs/{project_id}', params=kwargs)
+        return self._session.request(METHODS.GET, f'get_runs/{project_id}', params=kwargs)
 
     def add_run(self, project_id: int, **kwargs) -> dict:
         """
@@ -697,7 +698,7 @@ class Runs(BaseCategory):
             :key case_ids: list - An array of case IDs for the custom case selection
         :return: response
         """
-        return self._session.request('POST', f'add_run/{project_id}', json=kwargs)
+        return self._session.request(METHODS.POST, f'add_run/{project_id}', json=kwargs)
 
     def update_run(self, run_id: int, **kwargs) -> dict:
         """
@@ -711,7 +712,7 @@ class Runs(BaseCategory):
                         this method supports the same POST fields as add_run.
         :return: response
         """
-        return self._session.request('POST', f'update_run/{run_id}', json=kwargs)
+        return self._session.request(METHODS.POST, f'update_run/{run_id}', json=kwargs)
 
     def close_run(self, run_id: int):
         """
@@ -722,7 +723,7 @@ class Runs(BaseCategory):
         :param run_id: The ID of the test run
         :return: response
         """
-        return self._session.request('POST', f'close_run/{run_id}')
+        return self._session.request(METHODS.POST, f'close_run/{run_id}')
 
     def delete_run(self, run_id: int):
         """
@@ -733,7 +734,7 @@ class Runs(BaseCategory):
         :param run_id: The ID of the test run
         :return: response
         """
-        return self._session.request('POST', f'delete_run/{run_id}')
+        return self._session.request(METHODS.POST, f'delete_run/{run_id}')
 
 
 class Sections(BaseCategory):
@@ -747,7 +748,7 @@ class Sections(BaseCategory):
         :param section_id: The ID of the section
         :return: response
         """
-        response = self._session.request('GET', f'get_section/{section_id}')
+        response = self._session.request(METHODS.GET, f'get_section/{section_id}')
         return Section(response)
 
     def get_sections(self, project_id: int, suite_id: int) -> List[Section]:
@@ -760,7 +761,7 @@ class Sections(BaseCategory):
         :param suite_id: The ID of the test suite (optional if the project is operating in single suite mode)
         :return: response
         """
-        response = self._session.request('GET', f'get_sections/{project_id}', params={'suite_id': suite_id})
+        response = self._session.request(METHODS.GET, f'get_sections/{project_id}', params={'suite_id': suite_id})
         return [Section(rsp) for rsp in response]
 
     def add_section(self, project_id: int, section: Section) -> Section:
@@ -774,7 +775,7 @@ class Sections(BaseCategory):
         :return: response
         """
         data = section.raw_data()
-        response = self._session.request('POST', f'add_section/{project_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_section/{project_id}', json=data)
         if 'error' in response:
             raise TestRailError('Section creation failed with error: %s' % response['error'])
         return Section(response)
@@ -790,7 +791,7 @@ class Sections(BaseCategory):
         :return: response
         """
         data = section.raw_data()
-        response = self._session.request('POST', f'update_section/{section.id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_section/{section.id}', json=data)
         if 'error' in response:
             raise TestRailError('Section update failed with error: %s' % response['error'])
         return Section(response)
@@ -804,7 +805,7 @@ class Sections(BaseCategory):
         :param section_id: The ID of the section
         :return: response
         """
-        return self._session.request('POST', f'delete_section/{section_id}')
+        return self._session.request(METHODS.POST, f'delete_section/{section_id}')
 
 
 class Statuses(BaseCategory):
@@ -817,7 +818,7 @@ class Statuses(BaseCategory):
 
         :return: response
         """
-        response = self._session.request('GET', 'get_statuses')
+        response = self._session.request(METHODS.GET, 'get_statuses')
         return [Status(obj) for obj in response]
 
 
@@ -832,7 +833,7 @@ class Suites(BaseCategory):
         :param suite_id: The ID of the test suite
         :return: response
         """
-        response = self._session.request('GET', f'get_suite/{suite_id}')
+        response = self._session.request(METHODS.GET, f'get_suite/{suite_id}')
         return Suite(response)
 
     def get_suites(self, project_id: int) -> List[Suite]:
@@ -844,7 +845,7 @@ class Suites(BaseCategory):
         :param project_id: The ID of the project
         :return: response
         """
-        response = self._session.request('GET', f'get_suites/{project_id}')
+        response = self._session.request(METHODS.GET, f'get_suites/{project_id}')
         return [Suite(obj) for obj in response]
 
     def add_suite(self, project_id: int, suite: Suite) -> Suite:
@@ -858,7 +859,7 @@ class Suites(BaseCategory):
         :return: response
         """
         data = suite.raw_data()
-        response = self._session.request('POST', f'add_suite/{project_id}', json=data)
+        response = self._session.request(METHODS.POST, f'add_suite/{project_id}', json=data)
         if 'error' in response:
             raise TestRailError('Suite creation failed with error: %s' % response['error'])
         return Suite(response)
@@ -874,7 +875,7 @@ class Suites(BaseCategory):
         :return: response
         """
         data = suite.raw_data()
-        response = self._session.request('POST', f'update_suite/{suite.id}', json=data)
+        response = self._session.request(METHODS.POST, f'update_suite/{suite.id}', json=data)
         if 'error' in response:
             raise TestRailError('Suite update failed with error: %s' % response['error'])
         return Suite(response)
@@ -888,7 +889,7 @@ class Suites(BaseCategory):
         :param suite_id: The ID of the test suite
         :return: response
         """
-        response = self._session.request('POST', f'delete_suite/{suite_id}')
+        response = self._session.request(METHODS.POST, f'delete_suite/{suite_id}')
         if 'error' in response:
             raise TestRailError('Suite delete failed with error: %s' % response['error'])
         return response
@@ -905,7 +906,7 @@ class Templates(BaseCategory):
         :param project_id: The ID of the project
         :return: response
         """
-        response = self._session.request('GET', f'get_templates/{project_id}')
+        response = self._session.request(METHODS.GET, f'get_templates/{project_id}')
         return [Template(obj) for obj in response]
 
 
@@ -921,7 +922,7 @@ class Tests(BaseCategory):
         :param test_id: The ID of the test
         :return: response
         """
-        result = self._session.request('GET', f'get_test/{test_id}')
+        result = self._session.request(METHODS.GET, f'get_test/{test_id}')
         return Test(result)
 
     def get_tests(self, run_id: int, **kwargs) -> List[Test]:
@@ -935,7 +936,7 @@ class Tests(BaseCategory):
             :key status_id: int(list) - A comma-separated list of status IDs to filter by.
         :return: response
         """
-        result = self._session.request('GET', f'get_tests/{run_id}', params=kwargs)
+        result = self._session.request(METHODS.GET, f'get_tests/{run_id}', params=kwargs)
         return [Test(obj) for obj in result]
 
 
@@ -950,7 +951,7 @@ class Users(BaseCategory):
         :param user_id: The ID of the user
         :return: response
         """
-        return self._session.request('GET', f'get_user/{user_id}')
+        return self._session.request(METHODS.GET, f'get_user/{user_id}')
 
     def get_user_by_email(self, email: str) -> dict:
         """
@@ -961,7 +962,7 @@ class Users(BaseCategory):
         :param email: The email address to get the user for
         :return: response
         """
-        return self._session.request('GET', f'get_user_by_email', params={'email': email})
+        return self._session.request(METHODS.GET, f'get_user_by_email', params={'email': email})
 
     def get_users(self) -> List[dict]:
         """
@@ -971,4 +972,4 @@ class Users(BaseCategory):
 
         :return: response
         """
-        return self._session.request('GET', 'get_users')
+        return self._session.request(METHODS.GET, 'get_users')

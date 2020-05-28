@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from pytest_testrail.helper import TestRailError, custom_methods
+from pytest_testrail_client._exception import TestRailError
+from pytest_testrail_client.helper import custom_methods
 
 
 class Case(object):

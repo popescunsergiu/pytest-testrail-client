@@ -1,4 +1,4 @@
-from pytest_testrail.helper import custom_methods, testrail_duration_to_timedelta
+from pytest_testrail_client.helper import custom_methods, testrail_duration_to_timedelta
 
 
 class Test(object):

@@ -1,9 +1,21 @@
 """
 Description
 """
-
+from __future__ import annotations
 from . import _category
+from ._exception import TestRailConfigurationError
 from ._session import Session
+
+
+def validate_setup(tr: TestRailAPI, project_id):
+    if not project_id:
+        TestRailConfigurationError(
+            f'Project ID must be set. Invalid value {project_id}')
+    project_id = int(project_id)
+    if tr.projects.get_project(project_id).suite_mode != 3:
+        TestRailConfigurationError(
+            f'Project suite_mode {tr.projects.get_project().suite_mode} not compatible with this plugin. '
+            f'Use multiple test suites to manage cases')
 
 
 class TestRailAPI(Session):
