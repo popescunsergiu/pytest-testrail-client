@@ -74,13 +74,22 @@ def pytest_collection_modifyitems(config, items):
 
 def pytest_sessionstart(session):
     if 'pytest_testrail_export_test_results' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_results is True:
+            and session.config.option.pytest_testrail_export_test_results is True:
         pytest.testrail_client_dict['scenarios_run'] = {}
+
+        tr, project_data = get_testrail_api(session.config)
+        tr_configs = functools.reduce(operator.iconcat, [tr_cg['configs'] for tr_cg in
+                                                         tr.configurations.get_configs(project_data['project_id'])])
+        project_data['configuration_name'] = session.config.option.pytest_testrail_test_configuration_name
+        if project_data['configuration_name'] not in [tr_config['name'] for tr_config in tr_configs]:
+            TestRailError(f"Configuration {project_data['configuration_name']} not available. \n"
+                          f"Please use one of the following configurations or manually create a new one: "
+                          f"{[tr_config['name'] for tr_config in tr_configs]}")
 
 
 def pytest_sessionfinish(session):
     if 'pytest_testrail_export_test_cases' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_cases is True:
+            and session.config.option.pytest_testrail_export_test_cases is True:
         print('Initialize TestRail client')
         absolute_path = f'{session.config.rootdir}/{session.config.option.pytest_testrail_feature_files_relative_path}'
         files_abs_path = _get_list_of_files(absolute_path)
@@ -94,7 +103,7 @@ def pytest_sessionfinish(session):
         except ImportError as e:
             pass
     if 'pytest_testrail_export_test_results' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_results is True:
+            and session.config.option.pytest_testrail_export_test_results is True:
         print('Initialize TestRail client')
         scenarios_run = pytest.testrail_client_dict['scenarios_run']
 
@@ -354,7 +363,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
     feature_names = scenarios_run.keys()
 
     for feature_name in feature_names:
-        if feature_name not in plan_entry_names:
+        if feature_name not in plan_entry_names or (feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in functools.reduce(operator.iconcat, [plan_entry.runs for plan_entry in tr_plan.entries if plan_entry.name == feature_name])]):
             print(f"Adding suite {feature_name} to test plan {tr_plan.name}")
             suite_id = next((tr_suite.id for tr_suite in tr.suites.get_suites(project_data['project_id'])
                              if tr_suite.name == feature_name), None)

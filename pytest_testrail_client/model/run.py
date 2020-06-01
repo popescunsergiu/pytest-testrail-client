@@ -47,6 +47,10 @@ class Run(object):
     def config_ids(self):
         return self._content.get('config_ids')
 
+    @config_ids.setter
+    def config_ids(self, value):
+        self._content['config_ids'] = value
+
     @property
     def created_by(self):
         return self._content.get('created_by')
@@ -97,6 +101,10 @@ class Run(object):
     @property
     def milestone(self):
         return self._content.get('milestone_id')
+
+    @milestone.setter
+    def milestone(self, value):
+        self._content['milestone_id'] = value
 
     @property
     def name(self):

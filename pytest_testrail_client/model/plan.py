@@ -15,6 +15,10 @@ class Plan(object):
     def assignedto_id(self):
         return self._content.get('assignedto_id')
 
+    @assignedto_id.setter
+    def assignedto_id(self, value):
+        self._content['assignedto_id'] = value
+
     @property
     def blocked_count(self):
         return self._content.get('blocked_count')
@@ -119,6 +123,10 @@ class Entry(object):
     def assigned_to(self):
         return self._content.get('assignedto_id')
 
+    @assigned_to.setter
+    def assigned_to(self, value):
+        self._content['assignedto_id'] = value
+
     @property
     def case_ids(self):
         return self._content.get('case_ids')
@@ -126,6 +134,14 @@ class Entry(object):
     @case_ids.setter
     def case_ids(self, value):
         self._content['case_ids'] = value
+
+    @property
+    def config_ids(self):
+        return self._content.get('config_ids')
+
+    @config_ids.setter
+    def config_ids(self, value):
+        self._content['config_ids'] = value
 
     @property
     def description(self):
@@ -162,7 +178,7 @@ class Entry(object):
 
     @runs.setter
     def runs(self, value):
-        self._content['runs'] = value
+        self._content['runs'] = list(map(RunEntry, self._content.get('runs')))
 
     @property
     def suite_id(self):
