@@ -363,25 +363,31 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
     feature_names = scenarios_run.keys()
 
     for feature_name in feature_names:
-        if feature_name not in plan_entry_names or (feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in functools.reduce(operator.iconcat, [plan_entry.runs for plan_entry in tr_plan.entries if plan_entry.name == feature_name])]):
-            print(f"Adding suite {feature_name} to test plan {tr_plan.name}")
-            suite_id = next((tr_suite.id for tr_suite in tr.suites.get_suites(project_data['project_id'])
-                             if tr_suite.name == feature_name), None)
+        if feature_name not in plan_entry_names:
+            config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
+                                                                      [config_groups['configs'] for config_groups in
+                                                                       tr.configurations.get_configs(
+                                                                           project_data['project_id'])])]
+        else:
             config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
                                                                       [config_groups['configs'] for config_groups in
                                                                        tr.configurations.get_configs(
                                                                            project_data['project_id'])])
                           if config['name'] == project_data['configuration_name']]
-            run = Run({
+        if feature_name not in plan_entry_names or (feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in functools.reduce(operator.iconcat, [plan_entry.runs for plan_entry in tr_plan.entries if plan_entry.name == feature_name])]):
+            print(f"Adding suite {feature_name} to test plan {tr_plan.name}")
+            suite_id = next((tr_suite.id for tr_suite in tr.suites.get_suites(project_data['project_id'])
+                             if tr_suite.name == feature_name), None)
+            runs = [Run({
                 'include_all': True,
-                'config_ids': config_ids,
-            }).raw_data()
+                'config_ids': [config_id],
+            }).raw_data() for config_id in config_ids]
             tr_plan_entry = Entry({
                 'suite_id': suite_id,
                 'name': feature_name,
                 'include_all': True,
                 'config_ids': config_ids,
-                'runs': [run]
+                'runs': runs
             })
             tr.plans.add_plan_entry(tr_plan.id, tr_plan_entry)
 
