@@ -6,7 +6,7 @@ class TestRailError(Exception):
 
 
 class TestRailConfigurationError(TestRailError):
-    """Base API Exception"""
+    """Configuration Exception"""
 
 
 class TestRailAPIError(TestRailError):

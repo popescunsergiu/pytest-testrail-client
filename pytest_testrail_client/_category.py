@@ -159,7 +159,7 @@ class Configurations(BaseCategory):
         """
         return self._session.request(METHODS.GET, f'get_configs/{project_id}')
 
-    def add_config_group(self, project_id: int, name: str):
+    def add_config_group(self, project_id: int, name: str) -> dict:
         """
         http://docs.gurock.com/testrail-api2/reference-configs#add_config_group
 
@@ -169,7 +169,7 @@ class Configurations(BaseCategory):
         """
         return self._session.request(METHODS.POST, f'add_config_group/{project_id}', json={'name': name})
 
-    def add_config(self, config_group_id: int, name: str):
+    def add_config(self, config_group_id: int, name: str) -> dict:
         """
         http://docs.gurock.com/testrail-api2/reference-configs#add_config
 
@@ -179,7 +179,7 @@ class Configurations(BaseCategory):
         """
         return self._session.request(METHODS.POST, f'add_config/{config_group_id}', json={'name': name})
 
-    def update_config_group(self, config_group_id: int, name: str):
+    def update_config_group(self, config_group_id: int, name: str) -> dict:
         """
         http://docs.gurock.com/testrail-api2/reference-configs#update_config_group
 
@@ -189,7 +189,7 @@ class Configurations(BaseCategory):
         """
         return self._session.request(METHODS.POST, f'update_config_group/{config_group_id}', json={'name': name})
 
-    def update_config(self, config_id: int, name: str):
+    def update_config(self, config_id: int, name: str) -> dict:
         """
         http://docs.gurock.com/testrail-api2/reference-configs#update_config
 
@@ -559,7 +559,7 @@ class Results(BaseCategory):
         response = self._session.request(METHODS.POST, f'add_result/{result.test_id}', json=data)
         return [Result(obj) for obj in response]
 
-    def add_result_for_case(self, run_id: int, case_id: int, result: Result) -> List[Result]:
+    def add_result_for_case(self, run_id: int, case_id: int, result: Result) -> Result:
         """
         http://docs.gurock.com/testrail-api2/reference-results#add_result_for_case
 
@@ -580,7 +580,7 @@ class Results(BaseCategory):
         """
         data = result.raw_data()
         result = self._session.request(METHODS.POST, f'add_result_for_case/{run_id}/{case_id}', json=data)
-        return [Result(obj) for obj in result]
+        return Result(result)
 
     def add_results(self, run_id: int, results: List[Result]) -> List[Result]:
         """
