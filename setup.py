@@ -3,14 +3,14 @@ from setuptools import setup
 
 setup(
     name="pytest-testrail-client",
-    version="1.0.6",
+    version="1.0.7",
     use_scm_version=False,
     description="pytest plugin for Testrail",
     long_description=open("README.rst").read(),
     author="Sergiu Popescu",
     author_email="popescunsergiu@gmail.com",
     url="https://github.com/popescunsergiu/pytest-testrail-client",
-    download_url="https://github.com/popescunsergiu/pytest-testrail-client/archive/v1.0.6.tar.gz",
+    download_url="https://github.com/popescunsergiu/pytest-testrail-client/archive/v1.0.7.tar.gz",
     packages=setuptools.find_packages(exclude=('tests', 'dev_tools')),
     install_requires=[
         "cucumber-tag-expressions>=2.0.0",

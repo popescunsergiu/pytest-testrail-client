@@ -332,10 +332,12 @@ def get_suite_section_id(tr: TestRailAPI, project_id: int, project_suite_id: int
         }
         tr_suite_section = tr.sections.add_section(project_id=project_id, section=Section(suite_section))
         tr_suite_section_id = tr_suite_section.id
+        tr_suite_sections = tr.sections.get_sections(project_id, project_suite_id)
     if (sub_section_name_raw is not None and any(tr_suite_section.name == sub_section_name_raw
                                                  for tr_suite_section in tr_suite_sections)):
         print(f'Collecting Sub-Sections for suite {suite_name_raw} from TestRail')
-        tr_suite_sub_section_id = next(section.id for section in tr_suite_sections if section.name == section_name_raw)
+        tr_suite_sub_section_id = next(section.id
+                                       for section in tr_suite_sections if section.name == sub_section_name_raw)
         tr_suite_sub_section_id = tr_suite_sub_section_id
     elif sub_section_name_raw is not None:
         suite_sub_section = {
