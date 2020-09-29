@@ -449,7 +449,7 @@ def pytest_bdd_after_scenario(request, feature, scenario):
     if 'pytest_testrail_export_test_results' in request.config.option \
         and request.config.option.pytest_testrail_export_test_results is True:
         add_scenario_to_run(request, scenario)
-    if 'reruns' in request.config.option \
+    if 'reruns' in request.config.option and request.config.option.reruns > 0 \
         and request.config.option.reruns >= request.node.execution_count:
         scenario.failed = False
         for scenario_step in scenario.steps:
