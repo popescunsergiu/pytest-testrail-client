@@ -401,7 +401,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                 for scenario_run in scenarios_run[tr_run.name]:
                     tr_tests = tr.tests.get_tests(tr_run.id)
                     tr_test = next((test for test in tr_tests if test.title == scenario_run.name
-                                    and (test.custom_methods['custom_data_set'] is None
+                                    and (test.custom_methods.get('custom_data_set') is None
                                          or ('custom_data_set' in test.custom_methods
                                              and json.loads(
                                 test.custom_methods['custom_data_set']) == scenario_run.data_set)))
