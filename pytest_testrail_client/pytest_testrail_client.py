@@ -398,8 +398,8 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
         for tr_run in tr_plan_entry.runs:
             tr_results = []
             if tr_run.config == project_data['configuration_name'] and tr_run.name in scenarios_run:
+                tr_tests = tr.tests.get_tests(tr_run.id)
                 for scenario_run in scenarios_run[tr_run.name]:
-                    tr_tests = tr.tests.get_tests(tr_run.id)
                     tr_test = next((test for test in tr_tests if test.title == scenario_run.name
                                     and (test.custom_methods.get('custom_data_set') is None
                                          or ('custom_data_set' in test.custom_methods
@@ -438,6 +438,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                             'custom_step_results': custom_step_results
                         })
                         tr_results.append(tr_result)
+                        tr_tests = [row for row in tr_tests if not (row.id == tr_test.id)]
 
             if tr_results.__len__() != 0:
                 tr.results.add_results(tr_run.id, tr_results)
