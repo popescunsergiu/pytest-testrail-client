@@ -136,9 +136,13 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
         if tr_suite_sections_id['tr_suite_sub_section_id'] is not None \
         else tr_suite_sections_id['tr_suite_section_id']
     raw_custom_preconds = []
+    scenario = feature['children'][0]
+    if scenario['type'] is 'Background':
+        background_steps = scenario['steps']
     for scenario in reversed(feature['children']):
         if scenario['type'] == 'Background':
             continue
+        scenario['steps'] = background_steps + scenario['steps']
         raw_cases = []
         if 'examples' in scenario:
             examples_raw = scenario['examples'][0]
@@ -427,7 +431,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                             custom_step_results.append({
                                 'content': tr_case_step['content'],
                                 'expected': tr_case_step['expected'],
-                                'actual': exception_message,
+                                'actual': f'{exception_message}',
                                 'status_id': status_id
                             })
                         status_type = 'failed' if scenario_run.failed else 'passed'
