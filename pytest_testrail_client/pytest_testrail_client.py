@@ -439,7 +439,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                         tr_result = Result({
                             'test_id': tr_test.id,
                             'status_id': next(st.id for st in tr_statuses if st.name == status_type),
-                            'comment': '',
+                            'comment': ', '.join([row for row in scenario_run.tags if 'https' in row]),
                             'custom_step_results': custom_step_results
                         })
                         tr_results.append(tr_result)
