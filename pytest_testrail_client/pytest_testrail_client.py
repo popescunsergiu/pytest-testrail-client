@@ -136,6 +136,7 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
         if tr_suite_sections_id['tr_suite_sub_section_id'] is not None \
         else tr_suite_sections_id['tr_suite_section_id']
     raw_custom_preconds = []
+    background_steps = []
     scenario = feature['children'][0]
     if scenario['type'] is 'Background':
         background_steps = scenario['steps']
