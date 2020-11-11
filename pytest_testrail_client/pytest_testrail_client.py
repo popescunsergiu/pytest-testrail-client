@@ -456,7 +456,10 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                         tr_tests = [row for row in tr_tests if not (row.id == tr_test.id)]
 
             if tr_results.__len__() != 0:
-                tr.results.add_results(tr_run.id, tr_results)
+                response = tr.results.add_results(tr_run.id, tr_results)
+                for res in response:
+                    if res.status_id == 5:
+                        tr.results.add_attachment_to_result(res)
     print('\nResults published')
 
 
