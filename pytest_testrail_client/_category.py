@@ -639,11 +639,13 @@ class Results(BaseCategory):
         screenshot = re.search('Screenshot: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual).group(1)
         page_source = re.search('PageSource: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual).group(1)
         if screenshot:
-            self._session.request(METHODS.POST, f'add_attachment_to_result/{result.id}',
-                                  files={'attachment': open(screenshot, 'rb')})
+            self.attach(result.id, screenshot)
         if page_source:
-            self._session.request(METHODS.POST, f'add_attachment_to_result/{result.id}',
-                                  files={'attachment': open(page_source, 'rb')})
+            self.attach(result.id, page_source)
+
+    def attach(self, result_id, file):
+        self._session.request(METHODS.POST, f'add_attachment_to_result/{result_id}',
+                              files={'attachment': open(file, 'rb')})
 
 class ResultFields(BaseCategory):
 
