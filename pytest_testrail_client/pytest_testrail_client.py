@@ -514,3 +514,9 @@ def add_scenario_to_run(request, scenario):
     if suite_name not in pytest.testrail_client_dict['scenarios_run']:
         pytest.testrail_client_dict['scenarios_run'][suite_name] = []
     pytest.testrail_client_dict['scenarios_run'][suite_name].append(deepcopy(scenario))
+    scenario.exception = ''
+    scenario.failed = False
+    scenario.exception_message = ''
+    for scenario_step in scenario.steps:
+        scenario_step.failed = False
+        scenario_step.exception = ''
