@@ -156,11 +156,16 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
                     row.update({table_header[j]['value']: table_row['cells'][j]['value']})
                 table_rows.append(row)
             for table_row in table_rows:
-                raw_custom_data_set = json.dumps(table_row, indent=4, ensure_ascii=False)
+                # raw_custom_data_set = json.dumps(table_row, indent=4, ensure_ascii=False)
+                scenario_copy = deepcopy(scenario)
+                for key, value in table_row.items():
+                    scenario_copy['name'] = scenario_copy['name'].replace(f'<{key}>', value)
+                    for step in scenario_copy['steps']:
+                        step['text'] = step['text'].replace(f'<{key}>', value)
                 raw_cases.append(build_case(tr=tr, project_id=project_id, suite_id=tr_project_suite_id,
-                                            section_id=tr_suite_section_id, feature=feature, scenario=scenario,
+                                            section_id=tr_suite_section_id, feature=feature, scenario=scenario_copy,
                                             raw_custom_preconds=raw_custom_preconds,
-                                            raw_custom_data_set=raw_custom_data_set,
+                                            raw_custom_data_set=table_row,
                                             project_name=jira_project_key))
             set_test_case(tr, tr_suite_section_id, feature_file_path, scenario, raw_cases)
         else:
@@ -405,6 +410,8 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
             if tr_run.config == project_data['configuration_name'] and tr_run.name in scenarios_run:
                 tr_tests = tr.tests.get_tests(tr_run.id)
                 for scenario_run in scenarios_run[tr_run.name]:
+                    for key, value in scenario_run.data_set.items():
+                        scenario_run.name = scenario_run.name.replace(f'<{key}>', value)
                     tr_test = next((test for test in tr_tests if test.title == scenario_run.name
                                     and (test.custom_methods.get('custom_data_set') is None
                                          or ('custom_data_set' in test.custom_methods
@@ -429,6 +436,9 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                             exception_message = scenario_run.exception_message \
                                 if status_type == 'failed' and hasattr(scenario_run, 'exception_message') \
                                 else ''
+                            for key, value in scenario_run.data_set.items():
+                                if f'<{key}>' in tr_case_step['content']:
+                                    tr_case_step['content'] = tr_case_step['content'].replace(f'<{key}>', value)
                             custom_step_results.append({
                                 'content': tr_case_step['content'],
                                 'expected': tr_case_step['expected'],
@@ -439,7 +449,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                         tr_result = Result({
                             'test_id': tr_test.id,
                             'status_id': next(st.id for st in tr_statuses if st.name == status_type),
-                            'comment': ', '.join([row for row in scenario_run.tags if 'https' in row]),
+                            'comment': '',
                             'custom_step_results': custom_step_results
                         })
                         tr_results.append(tr_result)
