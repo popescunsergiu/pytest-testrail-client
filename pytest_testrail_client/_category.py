@@ -636,12 +636,12 @@ class Results(BaseCategory):
 
     def add_attachment_to_result(self, result: Result):
         actual = [row for row in result.raw_data()['custom_step_results'] if row['status_id'] == 5][0]['actual']
-        screenshot = re.search('Screenshot: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual).group(1)
-        page_source = re.search('PageSource: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual).group(1)
+        screenshot = re.search('Screenshot: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual)
         if screenshot:
-            self.attach(result.id, screenshot)
+            self.attach(result.id, screenshot.group(1))
+        page_source = re.search('PageSource: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual)
         if page_source:
-            self.attach(result.id, page_source)
+            self.attach(result.id, page_source.group(1))
 
     def attach(self, result_id, file):
         self._session.request(METHODS.POST, f'add_attachment_to_result/{result_id}',
