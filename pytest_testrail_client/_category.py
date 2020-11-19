@@ -636,7 +636,7 @@ class Results(BaseCategory):
 
     def add_attachment_to_result(self, result: Result):
         actual = [row for row in result.raw_data()['custom_step_results'] if row['status_id'] == 5][0]['actual']
-        screenshot = re.search('Screenshot: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual)
+        screenshot = re.search('shot: file:\/\/([a-zA-Z0-9_:\/\\\.]*)', actual)
         if screenshot:
             self.attach(result.id, screenshot.group(1))
         page_source = re.search('PageSource: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual)
