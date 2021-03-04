@@ -27,7 +27,7 @@ DEFAULT_SECTION_NAME = 'Default Section'
 
 
 def pytest_configure(config):
-    config.option.markexpr = 'not not_in_scope'
+    # config.option.markexpr = 'not not_in_scope'
     pytest.testrail_client_dict = defaultdict()
 
 
