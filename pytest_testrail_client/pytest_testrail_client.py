@@ -385,15 +385,15 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
                                                                       [config_groups['configs'] for config_groups in
                                                                        tr.configurations.get_configs(
                                                                            project_data['project_id'])])
-                          if config['name'] == project_data['configuration_name']]
+                          if config['name'] in project_data['configuration_name'].split(', ')]
         if feature_name not in plan_entry_names or (feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in functools.reduce(operator.iconcat, [plan_entry.runs for plan_entry in tr_plan.entries if plan_entry.name == feature_name])]):
             print(f"Adding suite {feature_name} to test plan {tr_plan.name}")
             suite_id = next((tr_suite.id for tr_suite in tr.suites.get_suites(project_data['project_id'])
                              if tr_suite.name == feature_name), None)
             runs = [Run({
                 'include_all': True,
-                'config_ids': [config_id],
-            }).raw_data() for config_id in config_ids]
+                'config_ids': config_ids,
+            }).raw_data()]
             tr_plan_entry = Entry({
                 'suite_id': suite_id,
                 'name': feature_name,
