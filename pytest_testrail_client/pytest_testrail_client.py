@@ -67,6 +67,7 @@ def pytest_addoption(parser):
 def pytest_collection_modifyitems(config, items):
     if 'pytest_testrail_export_test_cases' in config.option \
         and config.option.pytest_testrail_export_test_cases is True:
+        config.option.markexpr = 'not not_in_scope'
         print('\nUn-select all tests. Exporting is selected')
         for item in items:
             item.add_marker(pytest.mark.not_in_scope)
