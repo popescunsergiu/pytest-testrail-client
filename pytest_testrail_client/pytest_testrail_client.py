@@ -233,11 +233,17 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                         None)
 
     # Setting Case automation
-    raw_custom_automation_type = '1' if any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                                        any('regression' in sc['name'] for sc in scenario['scenario']['tags']) \
-        else '4' if any('regression' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                    not any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) \
-        else '0'
+    raw_custom_automation_type = \
+        '1' if any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) and \
+               (any('regression' in sc['name'] for sc in scenario['scenario']['tags']) or
+                any('smoke' in sc['name'] for sc in scenario['scenario']['tags']) or
+                any('critical' in sc['name'] for sc in scenario['scenario']['tags'])) \
+            else '4' if (any('regression' in sc['name'] for sc in scenario['scenario']['tags']) or
+                         any('smoke' in sc['name'] for sc in scenario['scenario']['tags']) or
+                         any('critical' in sc['name'] for sc in scenario['scenario']['tags'])) and not \
+                            any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else '5' if any('manual' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else '3'
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
@@ -329,44 +335,47 @@ def get_suite_section_id(tr: TestRailAPI, project_id: int, project_suite_id: int
     feature_name_components = feature_name_raw.split(SEPARATOR_CHAR) \
         if SEPARATOR_CHAR in feature_name_raw else [feature_name_raw]
     suite_name_raw = feature_name_raw.split(SEPARATOR_CHAR)[0]
-    section_name_raw = feature_name_components[1] if feature_name_components.__len__() > 1 else DEFAULT_SECTION_NAME
-    sub_section_name_raw = feature_name_components[2] if feature_name_components.__len__() > 2 else None
-    tr_suite_sections = tr.sections.get_sections(project_id, project_suite_id)
-    if any(tr_suite_section.name == section_name_raw for tr_suite_section in tr_suite_sections):
-        print(f'Collecting Sections for suite {suite_name_raw} from TestRail')
-        tr_suite_section_id = next(section.id for section in tr_suite_sections if section.name == section_name_raw)
-        tr_suite_section_id = tr_suite_section_id
-    else:
-        print(f'No Section with name {section_name_raw} was found for suite {suite_name_raw}. Creating new Section.')
-        suite_section = {
-            'name': section_name_raw,
-            'description': feature['description'].replace('\n  ', '\n').strip(),
-            'depth': 0,
-            'display_order': 2,
-            'suite_id': project_suite_id
-        }
-        tr_suite_section = tr.sections.add_section(project_id=project_id, section=Section(suite_section))
-        tr_suite_section_id = tr_suite_section.id
+    section_name_raws = feature_name_components[1:] if feature_name_components.__len__() > 1 else DEFAULT_SECTION_NAME
+    sub_section_name_raws = feature_name_components[2:] if feature_name_components.__len__() > 2 else None
+    for _ in range(len(sub_section_name_raws)):
         tr_suite_sections = tr.sections.get_sections(project_id, project_suite_id)
-    if (sub_section_name_raw is not None and any(tr_suite_section.name == sub_section_name_raw
-                                                 for tr_suite_section in tr_suite_sections)):
-        print(f'Collecting Sub-Sections for suite {suite_name_raw} from TestRail')
-        tr_suite_sub_section_id = next(section.id
-                                       for section in tr_suite_sections if section.name == sub_section_name_raw)
-        tr_suite_sub_section_id = tr_suite_sub_section_id
-    elif sub_section_name_raw is not None:
-        suite_sub_section = {
-            'name': sub_section_name_raw,
-            'description': feature['description'].replace('\n  ', '\n').strip(),
-            'depth': 0,
-            'display_order': 2,
-            'suite_id': project_suite_id,
-            'parent_id': tr_suite_section_id
-        }
-        tr_suite_sub_section = tr.sections.add_section(project_id=project_id, section=Section(suite_sub_section))
-        tr_suite_sub_section_id = tr_suite_sub_section.id
-    else:
-        tr_suite_sub_section_id = None
+        if any(tr_suite_section.name == section_name_raws[_] for tr_suite_section in tr_suite_sections):
+            print(f'Collecting Sections for suite {suite_name_raw} from TestRail')
+            tr_suite_section_id = next(
+                section.id for section in tr_suite_sections if section.name == section_name_raws[_])
+            tr_suite_section_id = tr_suite_section_id
+        else:
+            print(
+                f'No Section with name {section_name_raws[_]} was found for suite {suite_name_raw}. Creating new Section.')
+            suite_section = {
+                'name': section_name_raws[_],
+                'description': feature['description'].replace('\n  ', '\n').strip(),
+                'depth': 0,
+                'display_order': 2,
+                'suite_id': project_suite_id
+            }
+            tr_suite_section = tr.sections.add_section(project_id=project_id, section=Section(suite_section))
+            tr_suite_section_id = tr_suite_section.id
+            tr_suite_sections = tr.sections.get_sections(project_id, project_suite_id)
+        if (sub_section_name_raws[_] is not None and any(tr_suite_section.name == sub_section_name_raws[_]
+                                                         for tr_suite_section in tr_suite_sections)):
+            print(f'Collecting Sub-Sections for suite {suite_name_raw} from TestRail')
+            tr_suite_sub_section_id = next(section.id
+                                           for section in tr_suite_sections if section.name == sub_section_name_raws[_])
+            tr_suite_sub_section_id = tr_suite_sub_section_id
+        elif sub_section_name_raws[_] is not None:
+            suite_sub_section = {
+                'name': sub_section_name_raws[_],
+                'description': feature['description'].replace('\n  ', '\n').strip(),
+                'depth': 0,
+                'display_order': 2,
+                'suite_id': project_suite_id,
+                'parent_id': tr_suite_section_id
+            }
+            tr_suite_sub_section = tr.sections.add_section(project_id=project_id, section=Section(suite_sub_section))
+            tr_suite_sub_section_id = tr_suite_sub_section.id
+        else:
+            tr_suite_sub_section_id = None
     return {'tr_suite_section_id': tr_suite_section_id, 'tr_suite_sub_section_id': tr_suite_sub_section_id}
 
 
@@ -380,12 +389,6 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
     feature_names = scenarios_run.keys()
 
     for feature_name in feature_names:
-        # if feature_name not in plan_entry_names:
-        #     config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
-        #                                                               [config_groups['configs'] for config_groups in
-        #                                                                tr.configurations.get_configs(
-        #                                                                    project_data['project_id'])])]
-        # else:
         config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
                                                                   [config_groups['configs'] for config_groups in
                                                                    tr.configurations.get_configs(
