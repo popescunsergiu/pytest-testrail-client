@@ -139,15 +139,15 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
     raw_custom_preconds = []
     background_steps = []
     scenario = feature['children'][0]
-    if scenario['type'] is 'Background':
-        background_steps = scenario['steps']
+    if 'background' in scenario:
+        background_steps = scenario['background']['steps']
     for scenario in reversed(feature['children']):
-        if scenario['type'] == 'Background':
+        if 'background' in scenario:
             continue
-        scenario['steps'] = background_steps + scenario['steps']
+        scenario['steps'] = background_steps + scenario['scenario']['steps']
         raw_cases = []
-        if 'examples' in scenario:
-            examples_raw = scenario['examples'][0]
+        if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != []:
+            examples_raw = scenario['scenario']['examples'][0]
             table_rows = []
             table_header = examples_raw['tableHeader']['cells']
             for i in range(examples_raw['tableBody'].__len__()):
@@ -160,8 +160,8 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
                 # raw_custom_data_set = json.dumps(table_row, indent=4, ensure_ascii=False)
                 scenario_copy = deepcopy(scenario)
                 for key, value in table_row.items():
-                    scenario_copy['name'] = scenario_copy['name'].replace(f'<{key}>', value)
-                    for step in scenario_copy['steps']:
+                    scenario_copy['scenario']['name'] = scenario_copy['scenario']['name'].replace(f'<{key}>', value)
+                    for step in scenario_copy['scenario']['steps']:
                         step['text'] = step['text'].replace(f'<{key}>', value)
                 raw_cases.append(build_case(tr=tr, project_id=project_id, suite_id=tr_project_suite_id,
                                             section_id=tr_suite_section_id, feature=feature, scenario=scenario_copy,
@@ -178,24 +178,24 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
 
 
 def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_cases):
-    tags = [tag for tag in scenario['tags'] if TESTRAIL_TAG_PREFIX in tag['name']]
+    tags = [tag for tag in scenario['scenario']['tags'] if TESTRAIL_TAG_PREFIX in tag['name']]
     if tags.__len__() != 0:
-        print(f'Scenario {scenario["name"]} already exists in TestRail. Updating ...')
-        if 'examples' in scenario and scenario['examples'][0]['tableBody'].__len__() != tags.__len__():
-            print(f'Cannot update Scenario {scenario["name"]}. The number of eExamples changed. '
+        print(f'Scenario {scenario["scenario"]["name"]} already exists in TestRail. Updating ...')
+        if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != [] and scenario['scenario']['examples'][0]['tableBody'].__len__() != tags.__len__():
+            print(f'Cannot update Scenario {scenario["scenario"]["name"]}. The number of eExamples changed. '
                   f'Please manually remove {[tag["name"] + " " for tag in tags]} and import Scenario as new one.')
         for index, raw_case in enumerate(raw_cases, start=0):
             tr.cases.update_case(case_id=tags[index]['name'].replace(TESTRAIL_TAG_PREFIX, ''), case=raw_case)
     else:
-        print(f'Creating scenario {scenario["name"]} in TestRail.')
-        line = scenario['location']['line'] - 1 \
-            if scenario['tags'].__len__() > 0 else scenario['location']['line']
-        column = scenario['location']['column']
+        print(f'Creating scenario {scenario["scenario"]["name"]} in TestRail.')
+        line = scenario["scenario"]['location']['line'] - 1 \
+            if scenario["scenario"]['tags'].__len__() > 0 else scenario["scenario"]['location']['line']
+        column = scenario["scenario"]['location']['column']
         tag = ''
         for raw_case in raw_cases:
             tr_case = tr.cases.add_case(section_id=section_id, case=raw_case)
             tag += f'{TESTRAIL_TAG_PREFIX}{tr_case.id} '
-        tag += f'\n{" " * int(column - 1)}' if scenario['tags'].__len__() == 0 else ''
+        tag += f'\n{" " * int(column - 1)}' if scenario["scenario"]['tags'].__len__() == 0 else ''
         _write_feature(feature_file_path, line, column, tag)
 
 
@@ -204,11 +204,11 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                raw_custom_data_set=None, project_name=None) -> Case:
     # Setting Case references
     feature_refs = [ft for ft in feature['tags'] if project_name + '-' in ft['name']]
-    scenario_refs = [sc for sc in scenario['tags'] if project_name + '-' in sc['name']]
+    scenario_refs = [sc for sc in scenario['scenario']['tags'] if project_name + '-' in sc['name']]
     raw_refs = ', '.join(tg['name'].replace('@', '') for tg in (feature_refs + scenario_refs))
 
     # Setting Case tags
-    raw_custom_tags = [sc['name'] for sc in scenario['tags']
+    raw_custom_tags = [sc['name'] for sc in scenario['scenario']['tags']
                        if ('automated' not in sc['name']
                            and 'manual' not in sc['name'])] + \
                       [ft['name'] for ft in feature['tags']
@@ -218,9 +218,9 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                            and project_name + '-' not in ft['name'])]
 
     # Setting Case priority
-    priority_name = 'Critical' if filter(lambda sc: 'smoke' in sc['name'], scenario['tags']) \
-        else 'High' if filter(lambda sc: 'sanity' in sc['name'], scenario['tags']) \
-        else 'Medium' if filter(lambda sc: 'regression' in sc['name'], scenario['tags']) \
+    priority_name = 'Critical' if filter(lambda sc: 'smoke' in sc['name'], scenario['scenario']['tags']) \
+        else 'High' if filter(lambda sc: 'sanity' in sc['name'], scenario['scenario']['tags']) \
+        else 'Medium' if filter(lambda sc: 'regression' in sc['name'], scenario['scenario']['tags']) \
         else 'Low'
     raw_priority = next((pr.id for pr in tr.priorities.get_priorities() if pr.name == priority_name), None)
 
@@ -232,8 +232,8 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                         None)
 
     # Setting Case automation
-    raw_custom_automation_type = '2' if any('stencil-automated' in sc['name'] for sc in scenario['tags']) \
-        else '1' if any('automated' in sc['name'] for sc in scenario['tags']) else '0'
+    raw_custom_automation_type = '2' if any('stencil-automated' in sc['name'] for sc in scenario['scenario']['tags']) \
+        else '1' if any('automated' in sc['name'] for sc in scenario['scenario']['tags']) else '0'
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
@@ -250,7 +250,7 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
         'custom_tags': ', '.join(raw_custom_tags),
         'suite_id': suite_id,
         'section_id': section_id,
-        'title': scenario['name'],
+        'title': scenario['scenario']['name'],
         'type_id': raw_type,
         'template_id': raw_template,
         'custom_automation_type': raw_custom_automation_type,
@@ -376,13 +376,13 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
     feature_names = scenarios_run.keys()
 
     for feature_name in feature_names:
-        if feature_name not in plan_entry_names:
-            config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
-                                                                      [config_groups['configs'] for config_groups in
-                                                                       tr.configurations.get_configs(
-                                                                           project_data['project_id'])])]
-        else:
-            config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
+        # if feature_name not in plan_entry_names:
+        #     config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
+        #                                                               [config_groups['configs'] for config_groups in
+        #                                                                tr.configurations.get_configs(
+        #                                                                    project_data['project_id'])])]
+        # else:
+        config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
                                                                       [config_groups['configs'] for config_groups in
                                                                        tr.configurations.get_configs(
                                                                            project_data['project_id'])])
