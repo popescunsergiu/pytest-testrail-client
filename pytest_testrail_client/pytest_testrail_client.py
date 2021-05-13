@@ -75,7 +75,7 @@ def pytest_collection_modifyitems(config, items):
 
 def pytest_sessionstart(session):
     if 'pytest_testrail_export_test_results' in session.config.option \
-            and session.config.option.pytest_testrail_export_test_results is True:
+        and session.config.option.pytest_testrail_export_test_results is True:
         pytest.testrail_client_dict['scenarios_run'] = {}
 
         tr, project_data = get_testrail_api(session.config)
@@ -90,7 +90,7 @@ def pytest_sessionstart(session):
 
 def pytest_sessionfinish(session):
     if 'pytest_testrail_export_test_cases' in session.config.option \
-            and session.config.option.pytest_testrail_export_test_cases is True:
+        and session.config.option.pytest_testrail_export_test_cases is True:
         print('Initialize TestRail client')
         absolute_path = f'{session.config.rootdir}/{session.config.option.pytest_testrail_feature_files_relative_path}'
         files_abs_path = _get_list_of_files(absolute_path)
@@ -104,7 +104,7 @@ def pytest_sessionfinish(session):
         except ImportError as e:
             pass
     if 'pytest_testrail_export_test_results' in session.config.option \
-            and session.config.option.pytest_testrail_export_test_results is True:
+        and session.config.option.pytest_testrail_export_test_results is True:
         print('Initialize TestRail client')
         scenarios_run = pytest.testrail_client_dict['scenarios_run']
 
@@ -181,7 +181,8 @@ def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_
     tags = [tag for tag in scenario['scenario']['tags'] if TESTRAIL_TAG_PREFIX in tag['name']]
     if tags.__len__() != 0:
         print(f'Scenario {scenario["scenario"]["name"]} already exists in TestRail. Updating ...')
-        if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != [] and scenario['scenario']['examples'][0]['tableBody'].__len__() != tags.__len__():
+        if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != [] and \
+            scenario['scenario']['examples'][0]['tableBody'].__len__() != tags.__len__():
             print(f'Cannot update Scenario {scenario["scenario"]["name"]}. The number of eExamples changed. '
                   f'Please manually remove {[tag["name"] + " " for tag in tags]} and import Scenario as new one.')
         for index, raw_case in enumerate(raw_cases, start=0):
@@ -232,8 +233,11 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                         None)
 
     # Setting Case automation
-    raw_custom_automation_type = '2' if any('stencil-automated' in sc['name'] for sc in scenario['scenario']['tags']) \
-        else '1' if any('automated' in sc['name'] for sc in scenario['scenario']['tags']) else '0'
+    raw_custom_automation_type = '1' if any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                                        any('regression' in sc['name'] for sc in scenario['scenario']['tags']) \
+        else '4' if any('regression' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                    not any('to_automate' in sc['name'] for sc in scenario['scenario']['tags']) \
+        else '0'
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
@@ -383,11 +387,18 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
         #                                                                    project_data['project_id'])])]
         # else:
         config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
-                                                                      [config_groups['configs'] for config_groups in
-                                                                       tr.configurations.get_configs(
-                                                                           project_data['project_id'])])
-                          if config['name'] in project_data['configuration_name'].split(', ')]
-        if feature_name not in plan_entry_names or (feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in functools.reduce(operator.iconcat, [plan_entry.runs for plan_entry in tr_plan.entries if plan_entry.name == feature_name])]):
+                                                                  [config_groups['configs'] for config_groups in
+                                                                   tr.configurations.get_configs(
+                                                                       project_data['project_id'])])
+                      if config['name'] in project_data['configuration_name'].split(', ')]
+        if feature_name not in plan_entry_names or (
+            feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in
+                                                                                            functools.reduce(
+                                                                                                operator.iconcat,
+                                                                                                [plan_entry.runs for
+                                                                                                 plan_entry in
+                                                                                                 tr_plan.entries if
+                                                                                                 plan_entry.name == feature_name])]):
             print(f"Adding suite {feature_name} to test plan {tr_plan.name}")
             suite_id = next((tr_suite.id for tr_suite in tr.suites.get_suites(project_data['project_id'])
                              if tr_suite.name == feature_name), None)
