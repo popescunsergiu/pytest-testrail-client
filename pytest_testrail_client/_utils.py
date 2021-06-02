@@ -30,4 +30,4 @@ def _write_feature(file_path: str, line, column, value):
 
 
 def _get_list_of_files(absolute_path):
-    return [absolute_path.__add__(f) for f in listdir(absolute_path) if '.feature' in f]
+    return [f'{absolute_path}{f}' for f in listdir(absolute_path) if '.feature' in f]
