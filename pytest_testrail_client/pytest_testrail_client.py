@@ -375,9 +375,6 @@ def get_suite_section_id(tr: TestRailAPI, project_id: int, project_suite_id: int
             }
             tr_suite_sub_section = tr.sections.add_section(project_id=project_id, section=Section(suite_sub_section))
             tr_suite_sub_section_id = tr_suite_sub_section.id
-        else:
-            continue
-            # tr_suite_sub_section_id = None
     return {'tr_suite_section_id': tr_suite_section_id, 'tr_suite_sub_section_id': tr_suite_sub_section_id}
 
 
