@@ -179,6 +179,16 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
 
 def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_cases):
     tags = [tag for tag in scenario['scenario']['tags'] if TESTRAIL_TAG_PREFIX in tag['name']]
+    tag_names = [tag['name'] for tag in scenario['scenario']['tags']]
+    print(tag_names)
+    # for tag_name in tag_names:
+    if '@to_automate' not in tag_names and '@automated' not in tag_names and '@manual' not in tag_names:
+        raise TestRailError(f"automation_type is not provided in '{scenario['scenario']['name']}' scenario,  \n"
+                            f"should be '@to_automate', '@automated' or '@manual'")
+    if '@smoke' not in tag_names and '@critical' not in tag_names and '@regression' not in tag_names:
+        raise TestRailError(f"cases_type is not provided in '{scenario['scenario']['name']}' scenario,  \n"
+                            f"should be '@critical', '@smoke' or '@regression'")
+    # print(scenario)
     if tags.__len__() != 0:
         print(f'Scenario {scenario["scenario"]["name"]} already exists in TestRail. Updating ...')
         if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != [] and \
@@ -187,6 +197,8 @@ def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_
                   f'Please manually remove {[tag["name"] + " " for tag in tags]} and import Scenario as new one.')
         for index, raw_case in enumerate(raw_cases, start=0):
             tr.cases.update_case(case_id=tags[index]['name'].replace(TESTRAIL_TAG_PREFIX, ''), case=raw_case)
+    elif '@critical' in tag_names:
+        print(f'Scenario {scenario["scenario"]["name"]} contains @critical tag')
     else:
         print(f'Creating scenario {scenario["scenario"]["name"]} in TestRail.')
         line = scenario["scenario"]['location']['line'] - 1 \
@@ -245,6 +257,28 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
             else '5' if any('manual' in sc['name'] for sc in scenario['scenario']['tags']) \
             else '3'
 
+    # Setting Case Platform
+    raw_case_patform = \
+        ['1', '2', '3'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                           any('windows' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                           any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['1', '2'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                               any('windows' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['1', '3'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                               any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['2', '3'] if any('windows' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                               any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['1'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['2'] if any('windows' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['3']
+
+    # Setting ui Type
+    raw_ui_type = \
+        ['1', '2'] if any('phone' in sc['name'] for sc in scenario['scenario']['tags']) and \
+                      any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['1'] if any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else ['2']
+
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
     raw_steps.extend([
@@ -254,7 +288,7 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
         }
         for rs in scenario['steps']])
     raw_case = Case({
-        'estimate': '10m',
+        'estimate': '12m',
         'priority_id': raw_priority,
         'refs': raw_refs,
         'custom_tags': ', '.join(raw_custom_tags),
@@ -264,6 +298,8 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
         'type_id': raw_type,
         'template_id': raw_template,
         'custom_automation_type': raw_custom_automation_type,
+        'custom_platform': raw_case_patform,
+        'custom_ui_type': raw_ui_type,
         'custom_data_set': raw_custom_data_set,
         'custom_preconds': '\n'.join(str(rp) for rp in raw_custom_preconds),
         'custom_steps_separated': raw_steps
@@ -337,9 +373,11 @@ def get_suite_section_id(tr: TestRailAPI, project_id: int, project_suite_id: int
     suite_name_raw = feature_name_raw.split(SEPARATOR_CHAR)[0]
     section_name_raw = feature_name_components[1] if feature_name_components.__len__() > 1 else DEFAULT_SECTION_NAME
     tr_suite_sections = tr.sections.get_sections(project_id, project_suite_id)
-    if any(tr_suite_section.name == section_name_raw and tr_suite_section.parent_id is None for tr_suite_section in tr_suite_sections):
+    if any(tr_suite_section.name == section_name_raw and tr_suite_section.parent_id is None for tr_suite_section in
+           tr_suite_sections):
         print(f'Collecting Sections for suite {suite_name_raw} from TestRail')
-        tr_suite_section_id = next(section.id for section in tr_suite_sections if section.name == section_name_raw and section.parent_id is None)
+        tr_suite_section_id = next(section.id for section in tr_suite_sections if
+                                   section.name == section_name_raw and section.parent_id is None)
         tr_suite_section_id = tr_suite_section_id
     else:
         print(f'No Section with name {section_name_raw} was found for suite {suite_name_raw}. Creating new Section.')
