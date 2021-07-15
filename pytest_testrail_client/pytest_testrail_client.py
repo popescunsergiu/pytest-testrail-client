@@ -270,14 +270,16 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                                any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
             else ['1'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) \
             else ['2'] if any('windows' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['3']
+            else ['3'] if any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else []
 
     # Setting ui Type
     raw_ui_type = \
         ['1', '2'] if any('phone' in sc['name'] for sc in scenario['scenario']['tags']) and \
                       any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
             else ['1'] if any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['2']
+            else ['2'] if any('phone' in sc['name'] for sc in scenario['scenario']['tags']) \
+            else []
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
