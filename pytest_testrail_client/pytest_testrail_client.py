@@ -80,7 +80,7 @@ def pytest_sessionstart(session):
 
         tr, project_data = get_testrail_api(session.config)
         tr_configs = functools.reduce(operator.iconcat, [tr_cg['configs'] for tr_cg in
-                                                         tr.configurations.get_configs(project_data['project_id'])])
+                                                         tr.configurations.get_configs(project_data['project_id'])], [])
         project_data['configuration_name'] = session.config.option.pytest_testrail_test_configuration_name
         if project_data['configuration_name'] not in [tr_config['name'] for tr_config in tr_configs]:
             TestRailError(f"Configuration {project_data['configuration_name']} not available. \n"
@@ -433,7 +433,7 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
         config_ids = [config['id'] for config in functools.reduce(operator.iconcat,
                                                                   [config_groups['configs'] for config_groups in
                                                                    tr.configurations.get_configs(
-                                                                       project_data['project_id'])])
+                                                                       project_data['project_id'])], [])
                       if config['name'] in project_data['configuration_name'].split(', ')]
         if feature_name not in plan_entry_names or (
             feature_name in plan_entry_names and project_data['configuration_name'] not in [run.config for run in
