@@ -8,7 +8,7 @@ scenarios('../features/demo/fruits_01.feature',
           '../features/demo/sweets_02.feature',
           '../features/demo/vegetables_01.feature',
           '../features/demo/vegetables_02.feature',
-          strict_gherkin=False)
+          )
 
 
 @given("I have <pieces> apples")
