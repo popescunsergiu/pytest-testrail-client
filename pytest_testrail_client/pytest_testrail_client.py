@@ -230,15 +230,17 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
                            and 'nondestructive' not in ft['name']
                            and project_name + '-' not in ft['name'])]
 
-    # Setting Case priority
-    priority_name = 'Critical' if filter(lambda sc: 'smoke' in sc['name'], scenario['scenario']['tags']) \
-        else 'High' if filter(lambda sc: 'sanity' in sc['name'], scenario['scenario']['tags']) \
-        else 'Medium' if filter(lambda sc: 'regression' in sc['name'], scenario['scenario']['tags']) \
+    priority_name = 'Critical' if list(filter(lambda sc: 'smoke' in sc['name'], scenario['scenario']['tags'])) \
+        else 'High' if list(filter(lambda sc: 'sanity' in sc['name'], scenario['scenario']['tags'])) \
+        else 'Medium' if list(filter(lambda sc: 'regression' in sc['name'], scenario['scenario']['tags'])) \
         else 'Low'
     raw_priority = next((pr.id for pr in tr.priorities.get_priorities() if pr.name == priority_name), None)
 
     # Setting Case type
-    raw_type = next((ct.id for ct in tr.case_types.get_case_types() if ct.name == 'Functional'), None)
+    type_name = 'Regression' if list(filter(lambda sc: 'regression' in sc['name'], scenario['scenario']['tags'])) \
+        else 'Functional' if list(filter(lambda sc: 'functional' in sc['name'], scenario['scenario']['tags'])) \
+        else 'Other'
+    raw_type = next((ct.id for ct in tr.case_types.get_case_types() if ct.name == type_name), None)
 
     # Setting Case template
     raw_template = next((ct.id for ct in tr.templates.get_templates(project_id) if ct.name == 'Test Case (Steps)'),
