@@ -2,6 +2,7 @@
 TestRail API categories
 """
 import json
+import re
 from typing import List
 
 from pytest_testrail_client._enums import METHODS
@@ -633,6 +634,18 @@ class Results(BaseCategory):
         response = self._session.request(METHODS.POST, f'add_results_for_cases/{run_id}', json=data)
         return [Result(obj) for obj in response]
 
+    def add_attachment_to_result(self, result: Result):
+        actual = [row for row in result.raw_data()['custom_step_results'] if row['status_id'] == 5][0]['actual']
+        screenshot = re.search('shot: file:\/\/([a-zA-Z0-9_:\/\\\.]*)', actual)
+        if screenshot:
+            self.attach(result.id, screenshot.group(1))
+        page_source = re.search('PageSource: file:\/\/([a-zA-Z0-9:\/\\\.]*)', actual)
+        if page_source:
+            self.attach(result.id, page_source.group(1))
+
+    def attach(self, result_id, file):
+        self._session.request(METHODS.POST, f'add_attachment_to_result/{result_id}',
+                              files={'attachment': open(file, 'rb')})
 
 class ResultFields(BaseCategory):
 
