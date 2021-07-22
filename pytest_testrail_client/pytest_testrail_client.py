@@ -180,7 +180,6 @@ def export_test_cases(tr: TestRailAPI, project_id: int, jira_project_key, featur
 def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_cases):
     tags = [tag for tag in scenario['scenario']['tags'] if TESTRAIL_TAG_PREFIX in tag['name']]
     tag_names = [tag['name'] for tag in scenario['scenario']['tags']]
-    print(tag_names)
     # for tag_name in tag_names:
     if '@to_automate' not in tag_names and '@automated' not in tag_names and '@manual' not in tag_names:
         raise TestRailError(f"automation_type is not provided in '{scenario['scenario']['name']}' scenario,  \n"
@@ -188,7 +187,7 @@ def set_test_case(tr: TestRailAPI, section_id, feature_file_path, scenario, raw_
     if '@smoke' not in tag_names and '@critical' not in tag_names and '@regression' not in tag_names:
         raise TestRailError(f"cases_type is not provided in '{scenario['scenario']['name']}' scenario,  \n"
                             f"should be '@critical', '@smoke' or '@regression'")
-    # print(scenario)
+
     if tags.__len__() != 0:
         print(f'Scenario {scenario["scenario"]["name"]} already exists in TestRail. Updating ...')
         if 'examples' in scenario['scenario'] and scenario['scenario']['examples'] != [] and \
@@ -219,7 +218,8 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
     feature_refs = [ft for ft in feature['tags'] if project_name + '-' in ft['name']]
     scenario_refs = [sc for sc in scenario['scenario']['tags'] if project_name + '-' in sc['name']]
     raw_refs = ', '.join(tg['name'].replace('@', '') for tg in (feature_refs + scenario_refs))
-
+    feature_tags = [tag['name'] for tag in feature['tags']]
+    print(feature_tags)
     # Setting Case tags
     raw_custom_tags = [sc['name'] for sc in scenario['scenario']['tags']
                        if ('automated' not in sc['name']
@@ -238,7 +238,7 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
     raw_priority = next((pr.id for pr in tr.priorities.get_priorities() if pr.name == priority_name), None)
 
     # Setting Case type
-    raw_type = next((ct.id for ct in tr.case_types.get_case_types() if ct.name == 'Functional'), None)
+    # raw_type = next((ct.id for ct in tr.case_types.get_case_types() if ct.name == 'Functional'), None)
 
     # Setting Case template
     raw_template = next((ct.id for ct in tr.templates.get_templates(project_id) if ct.name == 'Test Case (Steps)'),
@@ -257,29 +257,48 @@ def build_case(tr: TestRailAPI, project_id: int, suite_id: int, section_id: int,
             else '5' if any('manual' in sc['name'] for sc in scenario['scenario']['tags']) \
             else '3'
 
-    # Setting Case Platform
-    raw_case_patform = \
-        ['1', '2', '3'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                           any('windows' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                           any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['1', '2'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                               any('windows' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['1', '3'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                               any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['2', '3'] if any('windows' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                               any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['1'] if any('apple' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['2'] if any('windows' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['3'] if any('android' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else []
+    def get_scenario_tags(scenario, feature, field):
+        tag_api_values = []
+        feature_tags = [tag['name'] for tag in feature['tags']]
 
-    # Setting ui Type
-    raw_ui_type = \
-        ['1', '2'] if any('phone' in sc['name'] for sc in scenario['scenario']['tags']) and \
-                      any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['1'] if any('productivity' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else ['2'] if any('phone' in sc['name'] for sc in scenario['scenario']['tags']) \
-            else []
+        if field == "case_patform":
+            keys_list = {
+                '@apple': '1',
+                '@android': '2',
+                '@windows': '3'
+            }
+        elif field == "ui_type":
+            keys_list = {
+                '@productivity': '1',
+                '@phone': '2'
+            }
+        elif field == "type":
+            keys_list = {
+                '@smoke': '11',
+                '@critical': '13',
+                '@regression': '9'
+            }
+
+        for tag in keys_list:
+            for test_tag in [sc['name'] for sc in scenario['scenario']['tags']]:
+                if test_tag == tag:
+                    tag_api_values.append(keys_list[tag])
+            if tag in feature_tags and tag not in tag_api_values:
+                tag_api_values.append(keys_list[tag])
+
+        if field == 'type':
+            if keys_list['@smoke'] in tag_api_values:
+                tag_api_values = keys_list['@smoke']
+            elif keys_list['@critical'] in tag_api_values:
+                tag_api_values = keys_list['@critical']
+            elif keys_list['@regression'] in tag_api_values:
+                tag_api_values = keys_list['@regression']
+
+        return tag_api_values
+
+    raw_case_patform = get_scenario_tags(scenario, feature, "case_patform")
+    raw_ui_type = get_scenario_tags(scenario, feature, "ui_type")
+    raw_type = get_scenario_tags(scenario, feature, "type")
 
     # Setting Case steps
     raw_steps = [{'content': rs, 'expected': ''} for rs in raw_custom_preconds]
