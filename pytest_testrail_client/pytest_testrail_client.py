@@ -121,10 +121,10 @@ def pytest_sessionfinish(session):
 def get_testrail_api(config):
     tr = TestRailAPI(config)
     project_id = config.getoption("--testrail-project-id") \
-                 or config.inicfg.config.get('pytest-testrail-client', 'testrail-project-id') \
+                 or config.getini("testrail-project-id") \
                  or environ.get("TESTRAIL_PROJECT_ID")
     jira_project_key = config.getoption("--jira-project-key") \
-                       or config.inicfg.config.get('pytest-testrail-client', 'jira-project-key') \
+                       or config.getini("jira-project-key") \
                        or environ.get("JIRA_PROJECT_KEY")
     validate_setup(tr, project_id)
     return tr, {'project_id': project_id, 'jira_project_key': jira_project_key}

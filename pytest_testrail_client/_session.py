@@ -40,13 +40,13 @@ class Session:
             :key headers: dict
         """
         _url = config.getoption("--testrail-url") \
-               or config.inicfg.config.get('pytest-testrail-client', 'testrail-url') \
+               or config.getini("testrail-url") \
                or environ.get("TESTRAIL_URL")
         _email = config.getoption("--testrail-email") \
-                 or config.inicfg.config.get('pytest-testrail-client', 'testrail-email') \
+                 or config.getini("testrail-email") \
                  or environ.get("TESTRAIL_EMAIL")
         _key = config.getoption("--testrail-key") \
-               or config.inicfg.config.get('pytest-testrail-client', 'testrail-key') \
+               or config.getini("testrail-key") \
                or environ.get("TESTRAIL_KEY")
         if not _url or not _email or not _key:
             raise TestRailError("No url or email or key values set. Aborting!!!")
