@@ -775,7 +775,7 @@ class Sections(BaseCategory):
         :return: response
         """
         response = self._session.request(METHODS.GET, f'get_sections/{project_id}', params={'suite_id': suite_id})
-        return [Section(rsp) for rsp in response]
+        return [Section(rsp) for rsp in response['sections']]
 
     def add_section(self, project_id: int, section: Section) -> Section:
         """
