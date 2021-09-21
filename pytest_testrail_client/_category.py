@@ -950,7 +950,7 @@ class Tests(BaseCategory):
         :return: response
         """
         result = self._session.request(METHODS.GET, f'get_tests/{run_id}', params=kwargs)
-        return [Test(obj) for obj in result]
+        return [Test(obj) for obj in result['tests']]
 
 
 class Users(BaseCategory):
