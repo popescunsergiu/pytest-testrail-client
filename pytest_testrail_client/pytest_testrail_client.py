@@ -54,19 +54,22 @@ def pytest_addoption(parser):
     parser.addini("jira-project-key", default=None, help=_help)
 
     _help = "TestRail export Test Cases form given file or directory. No test will be executed."
-    group.addoption("--pytest-testrail-export-test-cases", action="store_true", help=_help)
-    group.addoption("--pytest-testrail-feature-files-relative-path", action="store", default=None, help=_help)
+    group.addoption("--testrail-export-test-cases", action="store_true", help=_help)
+    group.addoption("--testrail-feature-files-relative-path", action="store", default=None, help=_help)
+    parser.addini("testrail-feature-files-relative-path", default=None, help=_help)
     _help = "TestRail export tTest Results."
-    group.addoption("--pytest-testrail-export-test-results", action="store_true", help=_help)
+    group.addoption("--testrail-export-test-results", action="store_true", help=_help)
     _help = "TestRail Test Plan to export results."
-    group.addoption("--pytest-testrail-test-plan-id", action="store", type="int", default=None, help=_help)
+    group.addoption("--testrail-test-plan-id", action="store", type="int", default=None, help=_help)
+    parser.addini("testrail-test-plan-id", default=None, help=_help)
     _help = "TestRail Test Configuration used for testing."
-    group.addoption("--pytest-testrail-test-configuration-name", action="store", default=None, help=_help)
+    group.addoption("--testrail-test-configuration-name", action="store", default=None, help=_help)
+    parser.addini("testrail-test-configuration-name", default=None, help=_help)
 
 
 def pytest_collection_modifyitems(config, items):
-    if 'pytest_testrail_export_test_cases' in config.option \
-        and config.option.pytest_testrail_export_test_cases is True:
+    if 'testrail_export_test_cases' in config.option \
+        and config.option.testrail_export_test_cases is True:
         config.option.markexpr = 'not not_in_scope'
         print('\nUn-select all tests. Exporting is selected')
         for item in items:
@@ -74,14 +77,16 @@ def pytest_collection_modifyitems(config, items):
 
 
 def pytest_sessionstart(session):
-    if 'pytest_testrail_export_test_results' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_results is True:
+    if 'testrail_export_test_results' in session.config.option \
+        and session.config.option.testrail_export_test_results is True:
         pytest.testrail_client_dict['scenarios_run'] = {}
 
         tr, project_data = get_testrail_api(session.config)
         tr_configs = functools.reduce(operator.iconcat, [tr_cg['configs'] for tr_cg in
                                                          tr.configurations.get_configs(project_data['project_id'])], [])
-        project_data['configuration_name'] = session.config.option.pytest_testrail_test_configuration_name
+        configuration_name = session.config.getoption('--testrail-test-configuration-name') \
+                             or session.config.getini('testrail-test-configuration-name')
+        project_data['configuration_name'] = configuration_name
         if project_data['configuration_name'] not in [tr_config['name'] for tr_config in tr_configs]:
             TestRailError(f"Configuration {project_data['configuration_name']} not available. \n"
                           f"Please use one of the following configurations or manually create a new one: "
@@ -89,10 +94,13 @@ def pytest_sessionstart(session):
 
 
 def pytest_sessionfinish(session):
-    if 'pytest_testrail_export_test_cases' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_cases is True:
+    if 'testrail_export_test_cases' in session.config.option \
+        and session.config.option.testrail_export_test_cases is True:
         print('Initialize TestRail client')
-        absolute_path = f'{session.config.rootdir}/{session.config.option.pytest_testrail_feature_files_relative_path}'
+        relative_path = session.config.getoption('--testrail-feature-files-relative-path') \
+                           or session.config.getini('testrail-feature-files-relative-path')
+        #absolute_path = f'{session.config.rootdir}/{session.config.option.pytest_testrail_feature_files_relative_path}'
+        absolute_path = f'{session.config.rootdir}/{relative_path}'
         files_abs_path = _get_list_of_files(absolute_path)
 
         try:
@@ -103,16 +111,19 @@ def pytest_sessionfinish(session):
                                   file_path)
         except ImportError as e:
             pass
-    if 'pytest_testrail_export_test_results' in session.config.option \
-        and session.config.option.pytest_testrail_export_test_results is True:
+    if 'testrail_export_test_results' in session.config.option \
+        and session.config.option.testrail_export_test_results is True:
         print('Initialize TestRail client')
         scenarios_run = pytest.testrail_client_dict['scenarios_run']
 
         try:
             tr, project_data = get_testrail_api(session.config)
-            testrail_plan_id = session.config.option.pytest_testrail_test_plan_id
+            testrail_plan_id = session.config.getoption('--testrail-test-plan-id') \
+                               or session.config.getini('testrail-test-plan-id')
             project_data['plan_id'] = testrail_plan_id
-            project_data['configuration_name'] = session.config.option.pytest_testrail_test_configuration_name
+            configuration_name = session.config.getoption('--testrail-test-configuration-name') \
+                               or session.config.getini('testrail-test-configuration-name')
+            project_data['configuration_name'] = configuration_name
             export_tests_results(tr, project_data, scenarios_run)
         except ImportError:
             pass
@@ -463,7 +474,8 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
     for tr_plan_entry in tr_plan.entries:
         for tr_run in tr_plan_entry.runs:
             tr_results = []
-            if tr_run.config == project_data['configuration_name'] and tr_run.name in scenarios_run:
+            #if tr_run.config == project_data['configuration_name'] and tr_run.name in scenarios_run:
+            if tr_run.name in scenarios_run:
                 tr_tests = tr.tests.get_tests(tr_run.id)
                 for scenario_run in scenarios_run[tr_run.name]:
                     for key, value in scenario_run.data_set.items():
@@ -521,8 +533,8 @@ def export_tests_results(tr: TestRailAPI, project_data: dict, scenarios_run: lis
 
 def pytest_bdd_after_scenario(request, feature, scenario):
     # Adding Scenario to the list of Scenarios ran
-    if 'pytest_testrail_export_test_results' in request.config.option \
-        and request.config.option.pytest_testrail_export_test_results is True:
+    if 'testrail_export_test_results' in request.config.option \
+        and request.config.option.testrail_export_test_results is True:
         add_scenario_to_run(request, scenario)
     if 'reruns' in request.config.option and request.config.option.reruns > 0 \
         and request.config.option.reruns >= request.node.execution_count:
